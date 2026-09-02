@@ -59,23 +59,9 @@ h2 { font-size: 20px; margin-bottom: 6px; }
   font-size: 14px; outline: none; background: #fbfcfe;
 }
 .field input:focus { border-color: var(--brand); background: #fff; }
-.field input[readonly] { background: var(--soft); color: var(--ink); font-weight: 600; letter-spacing: 1px; }
 .field .err { color: var(--err); font-size: 12px; margin-top: 4px; min-height: 0; display: none; }
 .field.invalid input { border-color: var(--err); }
 .field.invalid .err { display: block; }
-.bio-col { grid-column: 1 / -1; }
-details.help {
-  margin-top: 4px; font-size: 12px; color: var(--muted); background: var(--soft);
-  border-radius: 8px; padding: 8px 12px;
-}
-details.help summary { cursor: pointer; font-weight: 600; color: var(--brand); outline: none; }
-details.help code {
-  display: inline-block; background: #fff; border: 1px solid var(--line); border-radius: 5px;
-  padding: 1px 7px; font-size: 12px; margin: 2px 0;
-}
-details.help button {
-  border: none; background: none; color: var(--brand); cursor: pointer; font-size: 12px; padding: 0;
-}
 .btn {
   width: 100%; margin-top: 20px; padding: 13px; border: none; border-radius: 9px;
   background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff;
@@ -100,7 +86,8 @@ details.help button {
 .global-err.show { display: block; }
 section#features { margin-top: 44px; }
 .feat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 16px; }
-@media (max-width: 760px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+.feat-grid.wide { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 760px) { .feat-grid, .feat-grid.wide { grid-template-columns: repeat(2, 1fr); } }
 .feat {
   background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px;
 }
@@ -171,7 +158,7 @@ footer {
 
     <div class="steps">
       <div class="step"><b><span class="no">1</span>购买商品</b>在爱发电下单，订单中将随机发放一个 12 位支付兑换码</div>
-      <div class="step"><b><span class="no">2</span>填写注册信息</b>在下方输入账号、兑换码及本机信息</div>
+      <div class="step"><b><span class="no">2</span>填写注册信息</b>在下方输入账号、兑换码与联系方式</div>
       <div class="step"><b><span class="no">3</span>获取激活码</b>系统生成 12 位一次性注册激活码，复制保存即可</div>
     </div>
 
@@ -189,19 +176,6 @@ footer {
           <input id="code" type="text" maxlength="12" inputmode="numeric" autocomplete="off" placeholder="12 位数字">
           <div class="err" id="eCode"></div>
         </div>
-        <div class="field bio-col" id="fBios">
-          <label for="bios">BIOS 整机序列号（System-SN）</label>
-          <div class="hint">用于绑定本机，请按下方方法获取后粘贴；若显示 To be filled by O.E.M. 或为空，可直接留空</div>
-          <input id="bios" type="text" autocomplete="off" placeholder="粘贴 wmic 查询结果，或留空">
-          <div class="err" id="eBios"></div>
-          <details class="help">
-            <summary>如何获取 BIOS 序列号？</summary>
-            <p style="margin-top:6px">方法一：按 <code>Win + R</code> 输入 <code>cmd</code> 回车，执行下面命令，复制 SerialNumber 下方的一行：</p>
-            <p><code id="cmdWmic">wmic bios get serialnumber</code> <button type="button" id="copyCmd">复制命令</button></p>
-            <p style="margin-top:6px">方法二（Win11 / PowerShell）：<code>Get-CimInstance Win32_BIOS | Select-Object SerialNumber</code></p>
-            <p style="margin-top:6px">提示：可将查询结果整段粘贴到上方输入框（含 SerialNumber 表头亦可，系统会自动识别）；台式组装机常见 <b>To be filled by O.E.M.</b>，留空即可，系统将按 <b>TBFBYOEM</b> 登记。</p>
-          </details>
-        </div>
         <div class="field" id="fPhone">
           <label for="phone">联系电话</label>
           <div class="hint">便于售后联系与找回激活码</div>
@@ -214,11 +188,6 @@ footer {
           <input id="email" type="text" maxlength="50" autocomplete="off" placeholder="name@example.com">
           <div class="err" id="eEmail"></div>
         </div>
-        <div class="field">
-          <label for="dateSeq">当前日期序列（自动读取）</label>
-          <div class="hint">注册当日日期，无需填写</div>
-          <input id="dateSeq" type="text" readonly>
-        </div>
       </div>
 
       <button class="btn" id="btnSubmit" type="submit">生成注册激活码</button>
@@ -229,15 +198,23 @@ footer {
 
   <section id="features">
     <h2>软件功能介绍</h2>
-    <p class="lead">DMAIC Tools 围绕六西格玛 DMAIC 五大阶段提供工具化支持，详细功能介绍后续补充。</p>
+    <p class="lead">DMAIC Tools 是一套面向六西格玛质量改善的中文桌面工具软件，完整覆盖 DMAIC 五大阶段，安装后离线可用。</p>
     <div class="feat-grid">
-      <div class="feat"><div class="badge" style="background:#eff6ff;color:#2563eb">D</div><b>定义 Define</b><p>项目界定与问题陈述工具（功能介绍后续补充）</p></div>
-      <div class="feat"><div class="badge" style="background:#f0fdf4;color:#16a34a">M</div><b>测量 Measure</b><p>数据采集与测量系统分析（功能介绍后续补充）</p></div>
-      <div class="feat"><div class="badge" style="background:#fff7ed;color:#ea580c">A</div><b>分析 Analyze</b><p>统计分析与根因识别（功能介绍后续补充）</p></div>
-      <div class="feat"><div class="badge" style="background:#fdf4ff;color:#a21caf">I</div><b>改进 Improve</b><p>方案验证与改善实施（功能介绍后续补充）</p></div>
-      <div class="feat"><div class="badge" style="background:#f8fafc;color:#475569">C</div><b>控制 Control</b><p>过程监控与标准化控制（功能介绍后续补充）</p></div>
+      <div class="feat"><div class="badge" style="background:#eff6ff;color:#2563eb">D</div><b>定义 Define</b><p>项目立项与问题界定，把模糊的质量问题转化为目标清晰、可量化的改善项目</p></div>
+      <div class="feat"><div class="badge" style="background:#f0fdf4;color:#16a34a">M</div><b>测量 Measure</b><p>测量系统分析与数据采集工具，确保数据可信，摸清过程现状与基线水平</p></div>
+      <div class="feat"><div class="badge" style="background:#fff7ed;color:#ea580c">A</div><b>分析 Analyze</b><p>统计分析与图形化探因工具，从数据中快速定位真正关键的影响因素</p></div>
+      <div class="feat"><div class="badge" style="background:#fdf4ff;color:#a21caf">I</div><b>改进 Improve</b><p>改善方案设计与效果验证工具，用数据确认改进措施真实有效</p></div>
+      <div class="feat"><div class="badge" style="background:#f8fafc;color:#475569">C</div><b>控制 Control</b><p>过程监控与控制图工具，固化改善成果，防止指标回退</p></div>
     </div>
-    <p class="feat-note">本页面为账号注册与激活入口，软件功能介绍区域将持续更新，敬请期待。</p>
+    <div class="feat-grid wide">
+      <div class="feat"><b>向导式操作</b><p>按步骤引导完成分析，无统计背景也能顺利上手</p></div>
+      <div class="feat"><b>自动判定</b><p>内置判定规则，分析完成即自动给出结论提示</p></div>
+      <div class="feat"><b>图表可视化</b><p>分析结果自动生成图表，可直接用于汇报</p></div>
+      <div class="feat"><b>示例数据</b><p>各工具配有示例数据，拿来即学即练</p></div>
+      <div class="feat"><b>内置手册</b><p>软件内附操作手册，随时查阅</p></div>
+      <div class="feat"><b>离线使用</b><p>桌面应用本机运行，无需联网，数据保存在本机</p></div>
+    </div>
+    <p class="feat-note">以上为功能概览，具体工具清单以软件内实际提供为准。</p>
   </section>
 </main>
 
@@ -252,10 +229,7 @@ footer {
       <div class="key" id="mKey"></div>
     </div>
     <div class="meta">
-      <div><span>注册序号</span><span id="mSerial"></span></div>
-      <div><span>账号名</span><span id="mAccount"></span></div>
-      <div><span>日期序列</span><span id="mDate"></span></div>
-      <div><span>BIOS 序列号</span><span id="mBios"></span></div>
+      <div><span>绑定账号</span><span id="mAccount"></span></div>
     </div>
     <button class="btn-copy" id="btnCopy" type="button">复制激活码</button>
     <button class="btn-close" id="btnClose" type="button">我已保存，关闭</button>
@@ -272,37 +246,10 @@ footer {
   var D = window.DMAIC;
   var $ = function (id) { return document.getElementById(id); };
 
-  function refreshDate() {
-    $('dateSeq').value = D.dateSequence();
-  }
-  refreshDate();
-  setInterval(refreshDate, 60000);
-
-  var sn = new URLSearchParams(location.search).get('sn');
-  if (sn) $('bios').value = sn;
-
-  $('copyCmd').addEventListener('click', function () {
-    copyText($('cmdWmic').textContent, this, '已复制');
-  });
-
-  function copyText(text, btn, doneMsg) {
-    var fallback = function () {
-      var ta = document.createElement('textarea');
-      ta.value = text; document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); } catch (e) {}
-      document.body.removeChild(ta);
-      if (btn) { var o = btn.textContent; btn.textContent = doneMsg || '已复制'; setTimeout(function () { btn.textContent = o; }, 1600); }
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () {
-        if (btn) { var o = btn.textContent; btn.textContent = doneMsg || '已复制'; setTimeout(function () { btn.textContent = o; }, 1600); }
-      }, fallback);
-    } else fallback();
-  }
+  var autoBios = new URLSearchParams(location.search).get('sn') || '';
 
   function clearErrors() {
-    ['Account', 'Code', 'Bios', 'Phone', 'Email'].forEach(function (k) {
+    ['Account', 'Code', 'Phone', 'Email'].forEach(function (k) {
       $('f' + k).classList.remove('invalid');
       $('e' + k).textContent = '';
     });
@@ -396,7 +343,7 @@ footer {
     var input = {
       account: $('account').value,
       code: $('code').value,
-      bios: $('bios').value,
+      bios: autoBios,
       phone: $('phone').value,
       email: $('email').value
     };
@@ -424,13 +371,9 @@ footer {
         return;
       }
       $('mKey').textContent = res.key;
-      $('mSerial').textContent = String(res.serial);
       $('mAccount').textContent = res.account;
-      $('mDate').textContent = res.dateSeq;
-      $('mBios').textContent = res.bios;
       $('modal').classList.add('show');
       $('regForm').reset();
-      refreshDate();
     } catch (err) {
       setStatus('', false);
       showErrors(null, friendlyError(err));
