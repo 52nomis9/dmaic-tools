@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DMAIC Tools · 账号注册与激活</title>
+<style>
+:root {
+  --bg: #f4f6fb; --card: #ffffff; --ink: #1a2333; --muted: #6b7686;
+  --brand: #2563eb; --brand-dark: #1d4ed8; --ok: #16a34a; --err: #dc2626;
+  --line: #e5e9f2; --soft: #eef2fb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  background: var(--bg); color: var(--ink); line-height: 1.6;
+}
+header {
+  position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,.92);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+.header-inner {
+  max-width: 980px; margin: 0 auto; padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+.logo-mark {
+  width: 34px; height: 34px; border-radius: 9px; color: #fff; font-size: 18px;
+  background: linear-gradient(135deg, var(--brand), #7c3aed);
+  display: flex; align-items: center; justify-content: center; font-weight: 800;
+}
+nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 14px; }
+nav a:hover { color: var(--brand); }
+main { max-width: 980px; margin: 0 auto; padding: 28px 20px 60px; }
+h1 { font-size: 26px; margin-bottom: 6px; }
+h2 { font-size: 20px; margin-bottom: 6px; }
+.lead { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+.steps { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.step {
+  flex: 1; min-width: 180px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--muted);
+}
+.step b { display: block; color: var(--ink); font-size: 14px; }
+.step .no {
+  display: inline-flex; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--soft); color: var(--brand); font-weight: 700;
+  align-items: center; justify-content: center; font-size: 12px; margin-right: 6px;
+}
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 24px; box-shadow: 0 1px 3px rgba(16,24,40,.05);
+}
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+.field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+.field .hint { font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+.field input {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 14px; outline: none; background: #fbfcfe;
+}
+.field input:focus { border-color: var(--brand); background: #fff; }
+.field input[readonly] { background: var(--soft); color: var(--ink); font-weight: 600; letter-spacing: 1px; }
+.field .err { color: var(--err); font-size: 12px; margin-top: 4px; min-height: 0; display: none; }
+.field.invalid input { border-color: var(--err); }
+.field.invalid .err { display: block; }
+.bio-col { grid-column: 1 / -1; }
+details.help {
+  margin-top: 4px; font-size: 12px; color: var(--muted); background: var(--soft);
+  border-radius: 8px; padding: 8px 12px;
+}
+details.help summary { cursor: pointer; font-weight: 600; color: var(--brand); outline: none; }
+details.help code {
+  display: inline-block; background: #fff; border: 1px solid var(--line); border-radius: 5px;
+  padding: 1px 7px; font-size: 12px; margin: 2px 0;
+}
+details.help button {
+  border: none; background: none; color: var(--brand); cursor: pointer; font-size: 12px; padding: 0;
+}
+.btn {
+  width: 100%; margin-top: 20px; padding: 13px; border: none; border-radius: 9px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff;
+  font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: 2px;
+}
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+.status {
+  display: none; margin-top: 14px; padding: 10px 14px; border-radius: 8px;
+  font-size: 13px; background: var(--soft); color: var(--brand);
+  align-items: center; gap: 8px;
+}
+.status.show { display: flex; }
+.spin {
+  width: 14px; height: 14px; border: 2px solid var(--brand); border-top-color: transparent;
+  border-radius: 50%; animation: sp .8s linear infinite; flex: none;
+}
+@keyframes sp { to { transform: rotate(360deg); } }
+.global-err {
+  display: none; margin-top: 14px; padding: 10px 14px; border-radius: 8px;
+  font-size: 13px; background: #fef2f2; color: var(--err); border: 1px solid #fecaca;
+}
+.global-err.show { display: block; }
+section#features { margin-top: 44px; }
+.feat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 16px; }
+@media (max-width: 760px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+.feat {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px;
+}
+.feat .badge {
+  width: 38px; height: 38px; border-radius: 10px; font-weight: 800; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+}
+.feat b { font-size: 14px; }
+.feat p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.feat-note { margin-top: 14px; font-size: 13px; color: var(--muted); }
+footer {
+  border-top: 1px solid var(--line); padding: 20px; text-align: center;
+  color: var(--muted); font-size: 12px; background: #fff;
+}
+.modal {
+  position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 100;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal.show { display: flex; }
+.modal-card {
+  background: #fff; border-radius: 16px; max-width: 460px; width: 100%;
+  padding: 28px; text-align: center; animation: pop .18s ease-out;
+}
+@keyframes pop { from { transform: scale(.94); opacity: 0; } }
+.modal-card h3 { font-size: 18px; margin-bottom: 4px; }
+.modal-card .sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+.key-box {
+  background: linear-gradient(135deg, #eef2fb, #f5f3ff); border: 1px dashed var(--brand);
+  border-radius: 12px; padding: 18px 10px; margin-bottom: 16px;
+}
+.key-box .key {
+  font-family: Consolas, "Courier New", monospace; font-size: 27px; font-weight: 700;
+  letter-spacing: 3px; color: var(--brand-dark); word-break: break-all;
+}
+.key-box .lbl { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.meta { text-align: left; font-size: 13px; margin: 0 auto 18px; max-width: 340px; }
+.meta div { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.meta span:first-child { color: var(--muted); }
+.meta span:last-child { font-weight: 600; word-break: break-all; text-align: right; }
+.btn-copy {
+  width: 100%; padding: 12px; border: none; border-radius: 9px; background: var(--brand);
+  color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.btn-copy.done { background: var(--ok); }
+.btn-close {
+  width: 100%; margin-top: 10px; padding: 11px; border: 1px solid var(--line);
+  border-radius: 9px; background: #fff; color: var(--muted); font-size: 14px; cursor: pointer;
+}
+.save-tip { font-size: 12px; color: var(--err); margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo"><div class="logo-mark">D</div>DMAIC Tools</div>
+    <nav>
+      <a href="#register">账号注册</a>
+      <a href="#features">功能介绍</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="register">
+    <h1>账号注册与激活</h1>
+    <p class="lead">购买后凭爱发电发放的支付兑换码完成注册，即可获取与本机绑定的一次性注册激活码。</p>
+
+    <div class="steps">
+      <div class="step"><b><span class="no">1</span>购买商品</b>在爱发电下单，订单中将随机发放一个 12 位支付兑换码</div>
+      <div class="step"><b><span class="no">2</span>填写注册信息</b>在下方输入账号、兑换码及本机信息</div>
+      <div class="step"><b><span class="no">3</span>获取激活码</b>系统生成 12 位一次性注册激活码，复制保存即可</div>
+    </div>
+
+    <form id="regForm" class="card" novalidate>
+      <div class="grid">
+        <div class="field" id="fAccount">
+          <label for="account">账号名</label>
+          <div class="hint">5~9 位字母，区分大小写</div>
+          <input id="account" type="text" maxlength="9" autocomplete="off" placeholder="如 DMAICuser">
+          <div class="err" id="eAccount"></div>
+        </div>
+        <div class="field" id="fCode">
+          <label for="code">支付兑换码</label>
+          <div class="hint">12 位数字，购买后由爱发电发放</div>
+          <input id="code" type="text" maxlength="12" inputmode="numeric" autocomplete="off" placeholder="12 位数字">
+          <div class="err" id="eCode"></div>
+        </div>
+        <div class="field bio-col" id="fBios">
+          <label for="bios">BIOS 整机序列号（System-SN）</label>
+          <div class="hint">用于绑定本机，请按下方方法获取后粘贴；若显示 To be filled by O.E.M. 或为空，可直接留空</div>
+          <input id="bios" type="text" autocomplete="off" placeholder="粘贴 wmic 查询结果，或留空">
+          <div class="err" id="eBios"></div>
+          <details class="help">
+            <summary>如何获取 BIOS 序列号？</summary>
+            <p style="margin-top:6px">方法一：按 <code>Win + R</code> 输入 <code>cmd</code> 回车，执行下面命令，复制 SerialNumber 下方的一行：</p>
+            <p><code id="cmdWmic">wmic bios get serialnumber</code> <button type="button" id="copyCmd">复制命令</button></p>
+            <p style="margin-top:6px">方法二（Win11 / PowerShell）：<code>Get-CimInstance Win32_BIOS | Select-Object SerialNumber</code></p>
+            <p style="margin-top:6px">提示：可将查询结果整段粘贴到上方输入框（含 SerialNumber 表头亦可，系统会自动识别）；台式组装机常见 <b>To be filled by O.E.M.</b>，留空即可，系统将按 <b>TBFBYOEM</b> 登记。</p>
+          </details>
+        </div>
+        <div class="field" id="fPhone">
+          <label for="phone">联系电话</label>
+          <div class="hint">便于售后联系与找回激活码</div>
+          <input id="phone" type="text" maxlength="20" autocomplete="off" placeholder="手机号">
+          <div class="err" id="ePhone"></div>
+        </div>
+        <div class="field" id="fEmail">
+          <label for="email">联系邮箱</label>
+          <div class="hint">便于接收通知与找回激活码</div>
+          <input id="email" type="text" maxlength="50" autocomplete="off" placeholder="name@example.com">
+          <div class="err" id="eEmail"></div>
+        </div>
+        <div class="field">
+          <label for="dateSeq">当前日期序列（自动读取）</label>
+          <div class="hint">注册当日日期，无需填写</div>
+          <input id="dateSeq" type="text" readonly>
+        </div>
+      </div>
+
+      <button class="btn" id="btnSubmit" type="submit">生成注册激活码</button>
+      <div class="global-err" id="globalErr"></div>
+      <div class="status" id="status"><div class="spin"></div><span id="statusText">处理中…</span></div>
+    </form>
+  </section>
+
+  <section id="features">
+    <h2>软件功能介绍</h2>
+    <p class="lead">DMAIC Tools 围绕六西格玛 DMAIC 五大阶段提供工具化支持，详细功能介绍后续补充。</p>
+    <div class="feat-grid">
+      <div class="feat"><div class="badge" style="background:#eff6ff;color:#2563eb">D</div><b>定义 Define</b><p>项目界定与问题陈述工具（功能介绍后续补充）</p></div>
+      <div class="feat"><div class="badge" style="background:#f0fdf4;color:#16a34a">M</div><b>测量 Measure</b><p>数据采集与测量系统分析（功能介绍后续补充）</p></div>
+      <div class="feat"><div class="badge" style="background:#fff7ed;color:#ea580c">A</div><b>分析 Analyze</b><p>统计分析与根因识别（功能介绍后续补充）</p></div>
+      <div class="feat"><div class="badge" style="background:#fdf4ff;color:#a21caf">I</div><b>改进 Improve</b><p>方案验证与改善实施（功能介绍后续补充）</p></div>
+      <div class="feat"><div class="badge" style="background:#f8fafc;color:#475569">C</div><b>控制 Control</b><p>过程监控与标准化控制（功能介绍后续补充）</p></div>
+    </div>
+    <p class="feat-note">本页面为账号注册与激活入口，软件功能介绍区域将持续更新，敬请期待。</p>
+  </section>
+</main>
+
+<footer>© 2026 DMAIC Tools · 账号注册与激活中心</footer>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <h3>注册成功</h3>
+    <div class="sub">以下为系统生成的一次性注册激活码，仅显示一次</div>
+    <div class="key-box">
+      <div class="lbl">一次性注册激活码</div>
+      <div class="key" id="mKey"></div>
+    </div>
+    <div class="meta">
+      <div><span>注册序号</span><span id="mSerial"></span></div>
+      <div><span>账号名</span><span id="mAccount"></span></div>
+      <div><span>日期序列</span><span id="mDate"></span></div>
+      <div><span>BIOS 序列号</span><span id="mBios"></span></div>
+    </div>
+    <button class="btn-copy" id="btnCopy" type="button">复制激活码</button>
+    <button class="btn-close" id="btnClose" type="button">我已保存，关闭</button>
+    <div class="save-tip">请立即复制并妥善保存激活码；如遗失，可凭账号名与联系方式联系卖家查询。</div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.DMAIC_CONFIG || {};
+  var D = window.DMAIC;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function refreshDate() {
+    $('dateSeq').value = D.dateSequence();
+  }
+  refreshDate();
+  setInterval(refreshDate, 60000);
+
+  var sn = new URLSearchParams(location.search).get('sn');
+  if (sn) $('bios').value = sn;
+
+  $('copyCmd').addEventListener('click', function () {
+    copyText($('cmdWmic').textContent, this, '已复制');
+  });
+
+  function copyText(text, btn, doneMsg) {
+    var fallback = function () {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      if (btn) { var o = btn.textContent; btn.textContent = doneMsg || '已复制'; setTimeout(function () { btn.textContent = o; }, 1600); }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        if (btn) { var o = btn.textContent; btn.textContent = doneMsg || '已复制'; setTimeout(function () { btn.textContent = o; }, 1600); }
+      }, fallback);
+    } else fallback();
+  }
+
+  function clearErrors() {
+    ['Account', 'Code', 'Bios', 'Phone', 'Email'].forEach(function (k) {
+      $('f' + k).classList.remove('invalid');
+      $('e' + k).textContent = '';
+    });
+    $('globalErr').classList.remove('show');
+    $('globalErr').textContent = '';
+  }
+
+  function showErrors(errors, globalMsg) {
+    if (errors) {
+      Object.keys(errors).forEach(function (k) {
+        var cap = k.charAt(0).toUpperCase() + k.slice(1);
+        var f = $('f' + cap), e = $('e' + cap);
+        if (f && e && errors[k]) { f.classList.add('invalid'); e.textContent = errors[k]; }
+      });
+    }
+    if (globalMsg) {
+      $('globalErr').textContent = globalMsg;
+      $('globalErr').classList.add('show');
+    }
+  }
+
+  function setStatus(text, show) {
+    $('statusText').textContent = text;
+    $('status').classList.toggle('show', !!show);
+  }
+
+  function friendlyError(err) {
+    if (!err) return '未知错误，请重试';
+    if (err.status === 401) return '数据访问令牌无效或已过期，请联系卖家';
+    if (err.status === 403) return '数据访问令牌权限不足，请联系卖家';
+    if (err.status === 404) return '数据仓库不存在，请检查站点配置';
+    if (err.status === 403 || err.message === 'Failed to fetch') return '无法连接 GitHub 数据库，请检查网络后重试';
+    return err.message || '处理失败，请重试';
+  }
+
+  var GH = 'https://api.github.com';
+
+  function apiGetFile(path) {
+    var url = GH + '/repos/' + CFG.githubUser + '/' + CFG.dataRepo + '/contents/' +
+      encodeURIComponent(path) + '?ref=' + encodeURIComponent(CFG.branch) + '&t=' + Date.now();
+    return fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + CFG.token, 'Accept': 'application/vnd.github+json' },
+      cache: 'no-store'
+    }).then(function (r) {
+      if (r.status === 404) return null;
+      if (!r.ok) { var e = new Error('数据库读取失败 (HTTP ' + r.status + ')'); e.status = r.status; throw e; }
+      return r.json();
+    }).then(function (j) {
+      if (!j) return null;
+      return { content: D.b64ToUtf8(j.content || ''), sha: j.sha };
+    });
+  }
+
+  function apiPutFile(path, content, sha, message) {
+    var url = GH + '/repos/' + CFG.githubUser + '/' + CFG.dataRepo + '/contents/' + encodeURIComponent(path);
+    return fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + CFG.token,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: message,
+        content: D.utf8ToB64(content),
+        sha: sha || undefined,
+        branch: CFG.branch
+      })
+    }).then(function (r) {
+      if (!r.ok) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          var e = new Error(j.message || '数据库写入失败 (HTTP ' + r.status + ')');
+          e.status = r.status;
+          throw e;
+        });
+      }
+      return r.json();
+    });
+  }
+
+  var STAGE_TEXT = {
+    connect: '正在连接注册数据库…',
+    verify: '正在校验兑换码…',
+    write: '正在写入注册记录…'
+  };
+
+  $('regForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearErrors();
+
+    var input = {
+      account: $('account').value,
+      code: $('code').value,
+      bios: $('bios').value,
+      phone: $('phone').value,
+      email: $('email').value
+    };
+
+    var v = D.validateInput(input);
+    if (Object.keys(v.errors).length) { showErrors(v.errors); return; }
+
+    if (!CFG.token || !CFG.githubUser || !CFG.dataRepo) {
+      showErrors(null, '站点数据配置未完成，请联系卖家');
+      return;
+    }
+
+    var btn = $('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = '处理中…';
+    setStatus(STAGE_TEXT.connect, true);
+
+    try {
+      var res = await D.register({ getFile: apiGetFile, putFile: apiPutFile }, input, function (stage) {
+        setStatus(STAGE_TEXT[stage] || '处理中…', true);
+      });
+      setStatus('', false);
+      if (!res.ok) {
+        showErrors(res.errors || null, res.error || '注册失败，请检查输入');
+        return;
+      }
+      $('mKey').textContent = res.key;
+      $('mSerial').textContent = String(res.serial);
+      $('mAccount').textContent = res.account;
+      $('mDate').textContent = res.dateSeq;
+      $('mBios').textContent = res.bios;
+      $('modal').classList.add('show');
+      $('regForm').reset();
+      refreshDate();
+    } catch (err) {
+      setStatus('', false);
+      showErrors(null, friendlyError(err));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '生成注册激活码';
+    }
+  });
+
+  $('btnClose').addEventListener('click', function () { $('modal').classList.remove('show'); });
+  $('modal').addEventListener('click', function (e) { if (e.target === this) this.classList.remove('show'); });
+
+  $('btnCopy').addEventListener('click', function () {
+    var key = $('mKey').textContent;
+    var btn = this;
+    var fallback = function () {
+      var ta = document.createElement('textarea');
+      ta.value = key; document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      btn.classList.add('done'); btn.textContent = '已复制激活码';
+      setTimeout(function () { btn.classList.remove('done'); btn.textContent = '复制激活码'; }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(key).then(function () {
+        btn.classList.add('done'); btn.textContent = '已复制激活码';
+        setTimeout(function () { btn.classList.remove('done'); btn.textContent = '复制激活码'; }, 1800);
+      }, fallback);
+    } else fallback();
+  });
+})();
+</script>
+</body>
+</html>
