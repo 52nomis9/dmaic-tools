@@ -39,7 +39,7 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
   <h1>DMAIC Tools 卖家工具</h1>
   <p class="lead">兑换码生成 / 校验 / 库存核对。本页面在本地运行，不联网、不上传任何数据。</p>
 
-  <div class="warn">生成的兑换码必须<b>同时</b>用于两处：① 粘贴到爱发电商品的「高级选项 → 多行随机码」；② 更新到 dmaic-data 私有仓库的 codes.csv（保持全部历史码都在文件内）。</div>
+  <div class="warn">⚠️ 生成的兑换码只是「候选码」，必须<b>同时</b>完成两步才真正生效：① 粘贴到爱发电商品的「高级选项 → 多行随机码」；② 更新到 dmaic-data 私有仓库的 codes.csv（保留全部历史码、追加新码）。<b>只做①不做②，买家注册时会提示「兑换码不在有效码池中」。Excel 手工生成的码同理——数值校验通过 ≠ 已在码池中。</b></div>
 
   <div class="card">
     <h2>① 批量生成支付兑换码</h2>
@@ -47,7 +47,7 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
     <input type="number" id="count" value="100" min="1" max="1000">
     <button class="btn" id="btnGen">生成</button>
     <div class="count" id="genCount"></div>
-    <label>生成的兑换码（每行一个，已自动去重）</label>
+    <label>兑换码列表（点「生成」后显示；也可直接粘贴 Excel 生成的兑换码，每行一个）</label>
     <textarea id="genOut" spellcheck="false" placeholder="点击「生成」后在此显示"></textarea>
     <button class="btn" id="btnCopyAll">复制全部</button>
     <button class="btn ghost" id="btnDownload">下载 codes.csv</button>
@@ -111,17 +111,29 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
   });
 
   $('btnDownload').addEventListener('click', function () {
-    var t = $('genOut').value;
-    if (!t) return;
-    var rows = [D.CODES_HEADER.join(',')];
-    t.split('\n').forEach(function (l) { var c = l.trim(); if (c) rows.push(c); });
+    var lines = $('genOut').value.split('\n')
+      .map(function (l) { return l.trim(); })
+      .filter(function (l) { return l; });
+    if (!lines.length) { alert('请先点击「生成」按钮，或把 Excel 生成的兑换码粘贴到上方文本框（每行一个）'); return; }
+    var valid = lines.filter(function (c) { return D.isValidCode(c); });
+    if (valid.length < lines.length) {
+      alert('检测到 ' + (lines.length - valid.length) + ' 个未通过数值校验的码，已自动剔除；仅下载有效的 ' + valid.length + ' 个');
+    }
+    if (!valid.length) return;
+    var rows = [D.CODES_HEADER.join(',')].concat(valid.map(function (c) { return [c]; }));
     var csv = D.toCsv(rows);
     var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = 'codes.csv';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(a.href);
+    document.body.removeChild(a);
+    var b = $('btnDownload');
+    b.textContent = '已下载（含 ' + valid.length + ' 个码）';
+    setTimeout(function () { b.textContent = '下载 codes.csv'; }, 2200);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
   });
 
   $('btnCheck').addEventListener('click', function () {
