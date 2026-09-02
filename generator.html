@@ -15,6 +15,9 @@ h1 { font-size:22px; margin-bottom:4px; }
 .card h2 { font-size:16px; margin-bottom:10px; }
 .card p.note { font-size:12px; color:var(--muted); margin-top:10px; }
 label { display:block; font-size:13px; font-weight:600; margin:10px 0 5px; }
+.mode-row { display:flex; gap:18px; margin-bottom:2px; }
+.mode { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; margin:0; cursor:pointer; }
+.mode input { width:auto; margin:0; }
 input[type=number], input[type=text], textarea {
   width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px;
   outline:none; background:#fbfcfe; font-family:inherit;
@@ -43,8 +46,21 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
 
   <div class="card">
     <h2>① 批量生成支付兑换码</h2>
-    <label>生成数量（1~1000）</label>
-    <input type="number" id="count" value="100" min="1" max="1000">
+    <div class="mode-row">
+      <label class="mode"><input type="radio" name="genmode" value="random" checked> 随机生成</label>
+      <label class="mode"><input type="radio" name="genmode" value="seed"> 种子区间（可追溯，推荐）</label>
+    </div>
+    <div id="randomBox">
+      <label>生成数量（1~1000）</label>
+      <input type="number" id="count" value="100" min="1" max="1000">
+    </div>
+    <div id="seedBox" style="display:none">
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1"><label>起始种子</label><input type="number" id="seedStart" value="1001" min="0" step="1"></div>
+        <div style="flex:1"><label>结束种子</label><input type="number" id="seedEnd" value="1100" min="0" step="1"></div>
+      </div>
+      <p class="note">同一批种子永远生成同一批兑换码（如种子 1001~1100 → 100 个码），便于追溯与重算，推荐使用。</p>
+    </div>
     <button class="btn" id="btnGen">生成</button>
     <div class="count" id="genCount"></div>
     <label>兑换码列表（点「生成」后显示；也可直接粘贴 Excel 生成的兑换码，每行一个）</label>
@@ -93,12 +109,34 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
   var D = window.DMAIC;
   var $ = function (id) { return document.getElementById(id); };
 
+  var genMode = 'random';
+  document.querySelectorAll('input[name=genmode]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      genMode = this.value;
+      $('randomBox').style.display = genMode === 'random' ? '' : 'none';
+      $('seedBox').style.display = genMode === 'seed' ? '' : 'none';
+    });
+  });
+
   $('btnGen').addEventListener('click', function () {
-    var n = parseInt($('count').value, 10);
-    if (!n || n < 1 || n > 1000) { $('genCount').textContent = '请输入 1~1000 之间的数量'; return; }
-    var codes = D.generateCodes(n);
+    var codes = null;
+    if (genMode === 'seed') {
+      var a = parseInt($('seedStart').value, 10);
+      var b = parseInt($('seedEnd').value, 10);
+      codes = D.generateCodesFromSeeds(a, b);
+      if (!codes) { $('genCount').textContent = '种子区间无效（要求 0 ≤ 起始 ≤ 结束，且不超过 10000 个）'; return; }
+      if (new Set(codes).size !== codes.length) {
+        $('genCount').textContent = '该区间内存在重复码，请缩小范围后重试';
+        return;
+      }
+      $('genCount').textContent = '已按种子 ' + a + ' ~ ' + b + ' 生成 ' + codes.length + ' 个兑换码（可重现），全部通过校验规则';
+    } else {
+      var n = parseInt($('count').value, 10);
+      if (!n || n < 1 || n > 1000) { $('genCount').textContent = '请输入 1~1000 之间的数量'; return; }
+      codes = D.generateCodes(n);
+      $('genCount').textContent = '已生成 ' + codes.length + ' 个兑换码，全部通过校验规则';
+    }
     $('genOut').value = codes.join('\n');
-    $('genCount').textContent = '已生成 ' + codes.length + ' 个兑换码，全部通过校验规则';
   });
 
   $('btnCopyAll').addEventListener('click', function () {
