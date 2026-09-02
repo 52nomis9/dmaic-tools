@@ -87,19 +87,151 @@ h2 { font-size: 20px; margin-bottom: 6px; }
   font-size: 13px; background: #fef2f2; color: var(--err); border: 1px solid #fecaca;
 }
 .global-err.show { display: block; }
-section#features { margin-top: 44px; }
+section#features {
+  margin-top: 48px; position: relative; padding: 30px 26px 26px;
+  border-radius: 18px; background: var(--card); border: 1px solid var(--line);
+  overflow: hidden; box-shadow: 0 1px 3px rgba(16,24,40,.05);
+}
+#features::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(rgba(37,99,235,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37,99,235,.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 25%, transparent 78%);
+}
+#features::after {
+  content: ''; position: absolute; width: 360px; height: 360px; border-radius: 50%;
+  right: -130px; top: -150px; pointer-events: none;
+  background: radial-gradient(circle, rgba(124,58,237,.12), transparent 65%);
+}
+#features > * { position: relative; }
+#features h2::after {
+  content: ''; display: block; width: 44px; height: 4px; border-radius: 2px;
+  margin-top: 8px; background: linear-gradient(90deg, var(--brand), #7c3aed);
+}
+.kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0 6px; }
+@media (max-width: 640px) { .kpi-row { grid-template-columns: 1fr; } }
+.kpi {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+  background: linear-gradient(135deg, #f8faff, #f7f3ff);
+  border: 1px solid var(--line); border-radius: 12px;
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.kpi:hover { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(30,64,175,.10); }
+.kpi-num {
+  font-family: Consolas, "Courier New", monospace; font-size: 30px; font-weight: 800;
+  color: var(--brand); line-height: 1; min-width: 64px; text-align: center;
+}
+.kpi-txt { font-size: 12px; color: var(--muted); line-height: 1.55; }
 .feat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 16px; }
 .feat-grid.wide { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 760px) { .feat-grid, .feat-grid.wide { grid-template-columns: repeat(2, 1fr); } }
 .feat {
-  background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  animation: fadeUp .5s ease both;
 }
+.feat:nth-child(2) { animation-delay: .05s; }
+.feat:nth-child(3) { animation-delay: .1s; }
+.feat:nth-child(4) { animation-delay: .15s; }
+.feat:nth-child(5) { animation-delay: .2s; }
+.feat:nth-child(6) { animation-delay: .25s; }
+.feat:hover {
+  transform: translateY(-5px);
+  border-color: var(--c1, var(--brand));
+  box-shadow: 0 14px 30px rgba(30,64,175,.13);
+}
+.feat:active { transform: translateY(-2px) scale(.98); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } }
+.phase-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--c1, var(--brand)), var(--c2, #7c3aed));
+  transform: scaleX(0); transform-origin: left; transition: transform .3s ease;
+}
+.feat:hover .phase-bar { transform: scaleX(1); }
 .feat .badge {
   width: 38px; height: 38px; border-radius: 10px; font-weight: 800; font-size: 18px;
   display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+  color: #fff; background: linear-gradient(135deg, var(--c1, var(--brand)), var(--c2, #7c3aed));
+  box-shadow: 0 4px 10px rgba(30,64,175,.18);
+  transition: transform .25s ease;
 }
-.feat b { font-size: 14px; }
+.feat:hover .badge { transform: scale(1.1) rotate(-4deg); }
+.feat b { font-size: 14px; display: block; }
 .feat p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.feat .more {
+  font-size: 11px; color: var(--c1, var(--brand)); font-weight: 600; margin-top: 8px;
+  opacity: 0; transform: translateY(4px); transition: opacity .22s ease, transform .22s ease;
+}
+.feat:hover .more { opacity: 1; transform: none; }
+.spark { display: flex; gap: 3px; align-items: flex-end; height: 24px; margin-top: 10px; opacity: .5; transition: opacity .22s ease; }
+.spark i {
+  flex: 1; border-radius: 2px 2px 0 0; transform-origin: bottom;
+  background: linear-gradient(180deg, var(--c1, var(--brand)), var(--c2, #7c3aed));
+}
+.spark i:nth-child(1) { height: 35%; } .spark i:nth-child(2) { height: 62%; }
+.spark i:nth-child(3) { height: 45%; } .spark i:nth-child(4) { height: 85%; }
+.spark i:nth-child(5) { height: 68%; }
+.feat:hover .spark { opacity: 1; }
+.feat:hover .spark i { animation: barGrow .55s ease; }
+.feat:hover .spark i:nth-child(2) { animation-delay: .05s; }
+.feat:hover .spark i:nth-child(3) { animation-delay: .1s; }
+.feat:hover .spark i:nth-child(4) { animation-delay: .15s; }
+.feat:hover .spark i:nth-child(5) { animation-delay: .2s; }
+@keyframes barGrow { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.28); } }
+.fico {
+  width: 38px; height: 38px; border-radius: 10px; margin-bottom: 10px; position: relative;
+  background: linear-gradient(135deg, var(--c1, var(--brand)), var(--c2, #7c3aed));
+  box-shadow: 0 4px 10px rgba(30,64,175,.18);
+  transition: transform .25s ease;
+}
+.feat:hover .fico { transform: scale(1.1) rotate(-4deg); }
+.fico i, .fico::before, .fico::after { position: absolute; }
+.fico-steps i { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+.fico-steps i:nth-child(1) { left: 9px; bottom: 9px; }
+.fico-steps i:nth-child(2) { left: 16px; bottom: 16px; }
+.fico-steps i:nth-child(3) { left: 23px; bottom: 23px; }
+.fico-check::before {
+  content: '\2713'; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 20px; font-weight: 800;
+}
+.fico-chart i { bottom: 8px; width: 5px; border-radius: 2px; background: #fff; }
+.fico-chart i:nth-child(1) { left: 9px; height: 9px; }
+.fico-chart i:nth-child(2) { left: 17px; height: 15px; }
+.fico-chart i:nth-child(3) { left: 25px; height: 22px; }
+.fico-grid i { width: 7px; height: 7px; border-radius: 2px; background: #fff; }
+.fico-grid i:nth-child(1) { left: 9px; top: 9px; }
+.fico-grid i:nth-child(2) { left: 22px; top: 9px; }
+.fico-grid i:nth-child(3) { left: 9px; top: 22px; }
+.fico-grid i:nth-child(4) { left: 22px; top: 22px; }
+.fico-book::before {
+  content: ''; left: 10px; right: 10px; top: 12px; height: 14px;
+  border: 2px solid #fff; border-radius: 3px;
+}
+.fico-book::after {
+  content: ''; left: 14px; right: 14px; top: 17px; height: 2px;
+  background: #fff; box-shadow: 0 5px 0 #fff;
+}
+.fico-off::before {
+  content: ''; left: 11px; top: 11px; width: 16px; height: 16px;
+  border: 2px solid #fff; border-radius: 50%;
+}
+.fico-off::after {
+  content: ''; left: 9px; top: 18px; width: 20px; height: 2px;
+  background: #fff; transform: rotate(-45deg);
+}
+.fd-badge {
+  width: 56px; height: 56px; border-radius: 14px; margin: 0 auto 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 26px; font-weight: 800;
+  background: linear-gradient(135deg, var(--c1, #2563eb), var(--c2, #7c3aed));
+  box-shadow: 0 8px 20px rgba(37,99,235,.28);
+}
+.fd-card #fdTitle { font-size: 20px; margin-bottom: 8px; }
+.fd-card #fdDesc { font-size: 14px; color: var(--muted); line-height: 1.85; margin-bottom: 20px; text-align: left; }
 .feat-note { margin-top: 14px; font-size: 13px; color: var(--muted); }
 footer {
   border-top: 1px solid var(--line); padding: 20px; text-align: center;
@@ -122,8 +254,8 @@ footer {
   border-radius: 12px; padding: 18px 10px; margin-bottom: 16px;
 }
 .key-box .key {
-  font-family: Consolas, "Courier New", monospace; font-size: 27px; font-weight: 700;
-  letter-spacing: 3px; color: var(--brand-dark); word-break: break-all;
+  font-family: Consolas, "Courier New", monospace; font-size: 24px; font-weight: 700;
+  letter-spacing: 2px; color: var(--brand-dark); word-break: break-all;
 }
 .key-box .lbl { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 .meta { text-align: left; font-size: 13px; margin: 0 auto 18px; max-width: 340px; }
@@ -162,7 +294,7 @@ footer {
     <div class="steps">
       <div class="step"><b><span class="no">1</span>购买商品</b>在爱发电下单，订单中将随机发放一个 12 位支付兑换码</div>
       <div class="step"><b><span class="no">2</span>填写注册信息</b>在下方输入账号、兑换码与联系方式</div>
-      <div class="step"><b><span class="no">3</span>获取激活码</b>系统生成 12 位一次性注册激活码，复制保存即可</div>
+      <div class="step"><b><span class="no">3</span>获取激活码</b>系统生成 16 位一次性注册激活码，复制保存即可</div>
     </div>
 
     <form id="regForm" class="card" novalidate>
@@ -203,22 +335,106 @@ footer {
   <section id="features">
     <h2>软件功能介绍</h2>
     <p class="lead">DMAIC Tools 是一套面向六西格玛质量改善的中文桌面工具软件，完整覆盖 DMAIC 五大阶段，安装后离线可用。</p>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-num" data-n="5">0</div><div class="kpi-txt">大阶段<br>DMAIC 全程覆盖</div></div>
+      <div class="kpi"><div class="kpi-num" data-n="6">0</div><div class="kpi-txt">大产品特性<br>开箱即用</div></div>
+      <div class="kpi"><div class="kpi-num" data-n="100" data-suffix="%">0</div><div class="kpi-txt">功能离线可用<br>数据本地保存</div></div>
+    </div>
+
     <div class="feat-grid">
-      <div class="feat"><div class="badge" style="background:#eff6ff;color:#2563eb">D</div><b>定义 Define</b><p>项目立项与问题界定，把模糊的质量问题转化为目标清晰、可量化的改善项目</p></div>
-      <div class="feat"><div class="badge" style="background:#f0fdf4;color:#16a34a">M</div><b>测量 Measure</b><p>测量系统分析与数据采集工具，确保数据可信，摸清过程现状与基线水平</p></div>
-      <div class="feat"><div class="badge" style="background:#fff7ed;color:#ea580c">A</div><b>分析 Analyze</b><p>统计分析与图形化探因工具，从数据中快速定位真正关键的影响因素</p></div>
-      <div class="feat"><div class="badge" style="background:#fdf4ff;color:#a21caf">I</div><b>改进 Improve</b><p>改善方案设计与效果验证工具，用数据确认改进措施真实有效</p></div>
-      <div class="feat"><div class="badge" style="background:#f8fafc;color:#475569">C</div><b>控制 Control</b><p>过程监控与控制图工具，固化改善成果，防止指标回退</p></div>
+      <div class="feat" style="--c1:#2563eb;--c2:#60a5fa" data-badge="D" data-title="定义 Define"
+        data-desc="项目立项与问题界定阶段工具：帮助把模糊的质量问题转化为目标清晰、范围明确、可量化的改善项目，让后续每一步改善都从正确的方向开始。">
+        <span class="phase-bar"></span>
+        <div class="badge">D</div>
+        <b>定义 Define</b>
+        <p>项目立项与问题界定，把模糊的质量问题转化为目标清晰、可量化的改善项目</p>
+        <div class="spark"><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="more">点击查看详情 →</span>
+      </div>
+      <div class="feat" style="--c1:#16a34a;--c2:#4ade80" data-badge="M" data-title="测量 Measure"
+        data-desc="测量阶段工具：覆盖测量系统分析与数据采集，先确认数据本身可信，再摸清过程现状与基线水平——避免在不可信的数据上做决策。">
+        <span class="phase-bar"></span>
+        <div class="badge">M</div>
+        <b>测量 Measure</b>
+        <p>测量系统分析与数据采集工具，确保数据可信，摸清过程现状与基线水平</p>
+        <div class="spark"><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="more">点击查看详情 →</span>
+      </div>
+      <div class="feat" style="--c1:#ea580c;--c2:#fb923c" data-badge="A" data-title="分析 Analyze"
+        data-desc="分析阶段工具：内置常用统计分析与图形化探因方法，让数据自己说话，从众多可疑因素中快速锁定真正关键的少数。">
+        <span class="phase-bar"></span>
+        <div class="badge">A</div>
+        <b>分析 Analyze</b>
+        <p>统计分析与图形化探因工具，从数据中快速定位真正关键的影响因素</p>
+        <div class="spark"><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="more">点击查看详情 →</span>
+      </div>
+      <div class="feat" style="--c1:#a21caf;--c2:#e879f9" data-badge="I" data-title="改进 Improve"
+        data-desc="改进阶段工具：支持改善方案设计与前后对比验证，用数据证明改进措施真实有效，而非凭感觉或运气判断成效。">
+        <span class="phase-bar"></span>
+        <div class="badge">I</div>
+        <b>改进 Improve</b>
+        <p>改善方案设计与效果验证工具，用数据确认改进措施真实有效</p>
+        <div class="spark"><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="more">点击查看详情 →</span>
+      </div>
+      <div class="feat" style="--c1:#475569;--c2:#94a3b8" data-badge="C" data-title="控制 Control"
+        data-desc="控制阶段工具：提供过程监控与控制图，把改善成果固化到日常管理中，持续监控指标走向，防止问题悄悄回退。">
+        <span class="phase-bar"></span>
+        <div class="badge">C</div>
+        <b>控制 Control</b>
+        <p>过程监控与控制图工具，固化改善成果，防止指标回退</p>
+        <div class="spark"><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="more">点击查看详情 →</span>
+      </div>
     </div>
+
     <div class="feat-grid wide">
-      <div class="feat"><b>向导式操作</b><p>按步骤引导完成分析，无统计背景也能顺利上手</p></div>
-      <div class="feat"><b>自动判定</b><p>内置判定规则，分析完成即自动给出结论提示</p></div>
-      <div class="feat"><b>图表可视化</b><p>分析结果自动生成图表，可直接用于汇报</p></div>
-      <div class="feat"><b>示例数据</b><p>各工具配有示例数据，拿来即学即练</p></div>
-      <div class="feat"><b>内置手册</b><p>软件内附操作手册，随时查阅</p></div>
-      <div class="feat"><b>离线使用</b><p>桌面应用本机运行，无需联网，数据保存在本机</p></div>
+      <div class="feat" style="--c1:#0284c7;--c2:#38bdf8" data-badge="向" data-title="向导式操作"
+        data-desc="每个工具都按步骤引导完成：填什么数据、看什么指标、下什么结论，全程清晰提示，没有统计学背景也能独立完成完整分析。">
+        <div class="fico fico-steps"><i></i><i></i><i></i></div>
+        <b>向导式操作</b>
+        <p>按步骤引导完成分析，无统计背景也能顺利上手</p>
+        <span class="more">点击查看详情 →</span>
+      </div>
+      <div class="feat" style="--c1:#16a34a;--c2:#4ade80" data-badge="判" data-title="自动判定"
+        data-desc="内置判定规则：分析完成即自动给出结论提示（如通过 / 不通过 / 需关注），省去手工查表比对，减少误判。">
+        <div class="fico fico-check"></div>
+        <b>自动判定</b>
+        <p>内置判定规则，分析完成即自动给出结论提示</p>
+        <span class="more">点击查看详情 →</span>
+      </div>
+      <div class="feat" style="--c1:#7c3aed;--c2:#a78bfa" data-badge="图" data-title="图表可视化"
+        data-desc="分析结果自动生成专业统计图表，趋势、分布、对比一目了然，图表可直接用于报告与汇报，让结论更有说服力。">
+        <div class="fico fico-chart"><i></i><i></i><i></i></div>
+        <b>图表可视化</b>
+        <p>分析结果自动生成图表，可直接用于汇报</p>
+        <span class="more">点击查看详情 →</span>
+      </div>
+      <div class="feat" style="--c1:#d97706;--c2:#fbbf24" data-badge="例" data-title="示例数据"
+        data-desc="每个工具都附带演示数据，打开即可学习练习，边看边学快速掌握用法，上手成本几乎为零。">
+        <div class="fico fico-grid"><i></i><i></i><i></i><i></i></div>
+        <b>示例数据</b>
+        <p>各工具配有示例数据，拿来即学即练</p>
+        <span class="more">点击查看详情 →</span>
+      </div>
+      <div class="feat" style="--c1:#e11d48;--c2:#fb7185" data-badge="册" data-title="内置手册"
+        data-desc="软件内置操作手册与常用统计知识速查，遇到疑问随时翻阅，无需另外查找资料。">
+        <div class="fico fico-book"></div>
+        <b>内置手册</b>
+        <p>软件内附操作手册，随时查阅</p>
+        <span class="more">点击查看详情 →</span>
+      </div>
+      <div class="feat" style="--c1:#475569;--c2:#94a3b8" data-badge="离" data-title="离线使用"
+        data-desc="桌面应用，本机运行、本机存储，无需联网：数据不出电脑，随时随地可用，也不受网络环境限制。">
+        <div class="fico fico-off"></div>
+        <b>离线使用</b>
+        <p>桌面应用本机运行，无需联网，数据保存在本机</p>
+        <span class="more">点击查看详情 →</span>
+      </div>
     </div>
-    <p class="feat-note">以上为功能概览，具体工具清单以软件内实际提供为准。</p>
+    <p class="feat-note">点击任意卡片可查看功能详情。以上为功能概览，具体工具清单以软件内实际提供为准。</p>
   </section>
 </main>
 
@@ -241,6 +457,15 @@ footer {
   </div>
 </div>
 
+<div class="modal" id="featModal">
+  <div class="modal-card fd-card">
+    <div class="fd-badge" id="fdBadge"></div>
+    <h3 id="fdTitle"></h3>
+    <p id="fdDesc"></p>
+    <button class="btn-close" id="fdClose" type="button">关闭</button>
+  </div>
+</div>
+
 <script src="config.js"></script>
 <script src="core.js"></script>
 <script>
@@ -250,23 +475,43 @@ footer {
   var D = window.DMAIC;
   var $ = function (id) { return document.getElementById(id); };
 
-  var autoBios = new URLSearchParams(location.search).get('sn') || '';
+  var qs = new URLSearchParams(location.search);
+  var autoBios = qs.get('sn') || '';
+  var autoCn = qs.get('cn') || '';
 
   var acctAvailable = null;
-  $('account').addEventListener('input', function () {
+
+  function accountFormatOk() {
+    var name = $('account').value.trim();
+    var f = $('fAccount'), e = $('eAccount');
+    if (!name) { f.classList.remove('invalid'); e.textContent = ''; return false; }
+    var ok = /^[A-Za-z]{5,9}$/.test(name);
+    f.classList.toggle('invalid', !ok);
+    e.textContent = ok ? '' : '账号须为 5~9 位英文字母（区分大小写），不能含数字、空格或符号';
+    return ok;
+  }
+
+  function clearAcctStatus() {
     acctAvailable = null;
     $('acctStatus').textContent = '';
     $('acctStatus').className = 'acct-status';
-  });
-  $('account').addEventListener('blur', checkAccount);
+  }
 
-  async function checkAccount() {
+  $('account').addEventListener('input', function () {
+    clearAcctStatus();
+    accountFormatOk();
+  });
+  $('account').addEventListener('blur', function () {
+    if (accountFormatOk()) checkAccountAvailability();
+  });
+
+  async function checkAccountAvailability() {
     var name = $('account').value.trim();
     acctAvailable = null;
     var el = $('acctStatus');
     el.className = 'acct-status';
     el.textContent = '';
-    if (!/^[A-Za-z]{5,9}$/.test(name) || !CFG.token) return;
+    if (!CFG.token) return;
     el.textContent = '正在检索账号名…';
     try {
       var f = await apiGetFile('registrations.csv');
@@ -380,6 +625,7 @@ footer {
       account: $('account').value,
       code: $('code').value,
       bios: autoBios,
+      computerName: autoCn,
       phone: $('phone').value,
       email: $('email').value
     };
@@ -415,6 +661,9 @@ footer {
       $('mAccount').textContent = res.account;
       $('modal').classList.add('show');
       $('regForm').reset();
+      $('fAccount').classList.remove('invalid');
+      $('eAccount').textContent = '';
+      clearAcctStatus();
     } catch (err) {
       setStatus('', false);
       showErrors(null, friendlyError(err));
@@ -426,6 +675,56 @@ footer {
 
   $('btnClose').addEventListener('click', function () { $('modal').classList.remove('show'); });
   $('modal').addEventListener('click', function (e) { if (e.target === this) this.classList.remove('show'); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      $('modal').classList.remove('show');
+      $('featModal').classList.remove('show');
+    }
+  });
+
+  /* 功能卡片：点击查看详情弹窗 */
+  var featModal = $('featModal');
+  document.querySelectorAll('.feat[data-title]').forEach(function (card) {
+    card.addEventListener('click', function () {
+      var badge = $('fdBadge');
+      badge.textContent = card.getAttribute('data-badge') || '';
+      badge.style.setProperty('--c1', card.style.getPropertyValue('--c1') || '#2563eb');
+      badge.style.setProperty('--c2', card.style.getPropertyValue('--c2') || '#7c3aed');
+      $('fdTitle').textContent = card.getAttribute('data-title');
+      $('fdDesc').textContent = card.getAttribute('data-desc');
+      featModal.classList.add('show');
+    });
+  });
+  $('fdClose').addEventListener('click', function () { featModal.classList.remove('show'); });
+  featModal.addEventListener('click', function (e) { if (e.target === this) this.classList.remove('show'); });
+
+  /* KPI 数字滚动动画 */
+  function animateCount(el) {
+    var target = parseInt(el.getAttribute('data-n'), 10) || 0;
+    var suffix = el.getAttribute('data-suffix') || '';
+    var t0 = null, dur = 900;
+    function tick(t) {
+      if (t0 === null) t0 = t;
+      var p = Math.min(1, (t - t0) / dur);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  var kpiEls = document.querySelectorAll('.kpi-num');
+  if ('IntersectionObserver' in window) {
+    var kpiIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { animateCount(en.target); kpiIO.unobserve(en.target); }
+      });
+    }, { threshold: 0.4 });
+    kpiEls.forEach(function (el) { kpiIO.observe(el); });
+  } else {
+    kpiEls.forEach(function (el) {
+      el.textContent = el.getAttribute('data-n') + (el.getAttribute('data-suffix') || '');
+    });
+  }
 
   $('btnCopy').addEventListener('click', function () {
     var key = $('mKey').textContent;
