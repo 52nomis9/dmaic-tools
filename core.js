@@ -39,6 +39,20 @@
 
   function generateCode() { return codeFromSeed(randomSeed()); }
 
+  function generateCodeFromSeed(seed) {
+    var s = Number(seed);
+    if (!isFinite(s) || s < 0 || Math.floor(s) !== s) return null;
+    return codeFromSeed(BigInt(s));
+  }
+
+  function generateCodesFromSeeds(start, end) {
+    var a = Number(start), b = Number(end);
+    if (!isFinite(a) || !isFinite(b) || a < 0 || b < a || b - a + 1 > 10000) return null;
+    var out = [];
+    for (var i = a; i <= b; i++) out.push(codeFromSeed(BigInt(i)));
+    return out;
+  }
+
   function generateCodes(n) {
     var set = new Set();
     var guard = 0;
@@ -216,6 +230,8 @@
     CODES_HEADER: CODES_HEADER,
     isValidCode: isValidCode,
     generateCode: generateCode,
+    generateCodeFromSeed: generateCodeFromSeed,
+    generateCodesFromSeeds: generateCodesFromSeeds,
     generateCodes: generateCodes,
     normalizeBios: normalizeBios,
     buildKey: buildKey,
