@@ -267,6 +267,9 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
     if (!regData || !regData.length) { t.innerHTML = ''; return; }
     var showFull = $('showFull').checked;
     var q = $('regSearch').value.trim().toLowerCase();
+    var colIdx = {};
+    regData[0].forEach(function (h, i) { colIdx[h] = i; });
+    var phoneIdx = colIdx['联系电话'], emailIdx = colIdx['联系邮箱'];
     var rows = regData.slice(1);
     if (q) {
       rows = rows.filter(function (r) {
@@ -278,13 +281,13 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
       html += '<tr>' + r.map(function (f, idx) {
         var v = String(f);
         if (!showFull) {
-          if (idx === 6) v = maskPhone(v);
-          if (idx === 7) v = maskEmail(v);
+          if (idx === phoneIdx) v = maskPhone(v);
+          if (idx === emailIdx) v = maskEmail(v);
         }
         return '<td>' + v + '</td>';
       }).join('') + '</tr>';
     });
-    t.innerHTML = html || '<tr><td colspan="9">无匹配记录</td></tr>';
+    t.innerHTML = html || '<tr><td colspan="' + regData[0].length + '">无匹配记录</td></tr>';
   }
 
   $('regSearch').addEventListener('input', renderReg);
