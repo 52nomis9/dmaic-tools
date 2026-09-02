@@ -62,6 +62,9 @@ h2 { font-size: 20px; margin-bottom: 6px; }
 .field .err { color: var(--err); font-size: 12px; margin-top: 4px; min-height: 0; display: none; }
 .field.invalid input { border-color: var(--err); }
 .field.invalid .err { display: block; }
+.acct-status { font-size: 12px; margin-top: 4px; min-height: 0; }
+.acct-status.ok { color: var(--ok); }
+.acct-status.bad { color: var(--err); }
 .btn {
   width: 100%; margin-top: 20px; padding: 13px; border: none; border-radius: 9px;
   background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff;
@@ -168,6 +171,7 @@ footer {
           <label for="account">账号名</label>
           <div class="hint">5~9 位字母，区分大小写</div>
           <input id="account" type="text" maxlength="9" autocomplete="off" placeholder="如 DMAICuser">
+          <div class="acct-status" id="acctStatus"></div>
           <div class="err" id="eAccount"></div>
         </div>
         <div class="field" id="fCode">
@@ -247,6 +251,38 @@ footer {
   var $ = function (id) { return document.getElementById(id); };
 
   var autoBios = new URLSearchParams(location.search).get('sn') || '';
+
+  var acctAvailable = null;
+  $('account').addEventListener('input', function () {
+    acctAvailable = null;
+    $('acctStatus').textContent = '';
+    $('acctStatus').className = 'acct-status';
+  });
+  $('account').addEventListener('blur', checkAccount);
+
+  async function checkAccount() {
+    var name = $('account').value.trim();
+    acctAvailable = null;
+    var el = $('acctStatus');
+    el.className = 'acct-status';
+    el.textContent = '';
+    if (!/^[A-Za-z]{5,9}$/.test(name) || !CFG.token) return;
+    el.textContent = '正在检索账号名…';
+    try {
+      var f = await apiGetFile('registrations.csv');
+      if ($('account').value.trim() !== name) return;
+      var rows = f ? D.parseCsv(f.content).slice(1) : [];
+      var used = false;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i][1] === name) { used = true; break; }
+      }
+      acctAvailable = !used;
+      el.textContent = used ? '✗ 该账号名已被注册，请更换' : '✓ 账号名可用';
+      el.className = 'acct-status ' + (used ? 'bad' : 'ok');
+    } catch (e) {
+      el.textContent = '';
+    }
+  }
 
   function clearErrors() {
     ['Account', 'Code', 'Phone', 'Email'].forEach(function (k) {
@@ -350,6 +386,11 @@ footer {
 
     var v = D.validateInput(input);
     if (Object.keys(v.errors).length) { showErrors(v.errors); return; }
+
+    if (acctAvailable === false) {
+      showErrors({ account: '该账号名已被注册，请更换账号名' });
+      return;
+    }
 
     if (!CFG.token || !CFG.githubUser || !CFG.dataRepo) {
       showErrors(null, '站点数据配置未完成，请联系卖家');
