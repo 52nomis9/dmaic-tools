@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DMAIC Tools · 卖家工具（兑换码生成/校验/库存核对）</title>
+<style>
+:root { --bg:#f4f6fb; --card:#fff; --ink:#1a2333; --muted:#6b7686; --brand:#2563eb; --ok:#16a34a; --err:#dc2626; --line:#e5e9f2; --soft:#eef2fb; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.6; padding:24px 16px 60px; }
+.wrap { max-width:860px; margin:0 auto; }
+h1 { font-size:22px; margin-bottom:4px; }
+.lead { font-size:13px; color:var(--muted); margin-bottom:20px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; margin-bottom:18px; }
+.card h2 { font-size:16px; margin-bottom:10px; }
+.card p.note { font-size:12px; color:var(--muted); margin-top:10px; }
+label { display:block; font-size:13px; font-weight:600; margin:10px 0 5px; }
+input[type=number], input[type=text], textarea {
+  width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px;
+  outline:none; background:#fbfcfe; font-family:inherit;
+}
+input:focus, textarea:focus { border-color:var(--brand); background:#fff; }
+textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; resize:vertical; }
+.btn {
+  padding:10px 18px; border:none; border-radius:8px; background:var(--brand); color:#fff;
+  font-size:14px; font-weight:600; cursor:pointer; margin-top:12px; margin-right:10px;
+}
+.btn.ghost { background:#fff; color:var(--brand); border:1px solid var(--brand); }
+.btn:disabled { opacity:.55; cursor:not-allowed; }
+.result { margin-top:12px; font-size:13px; }
+.ok { color:var(--ok); font-weight:600; }
+.bad { color:var(--err); font-weight:600; }
+.warn { background:#fffbeb; border:1px solid #fde68a; color:#92400e; border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:18px; }
+.count { font-size:13px; color:var(--muted); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DMAIC Tools 卖家工具</h1>
+  <p class="lead">兑换码生成 / 校验 / 库存核对。本页面在本地运行，不联网、不上传任何数据。</p>
+
+  <div class="warn">生成的兑换码必须<b>同时</b>用于两处：① 粘贴到爱发电商品的「高级选项 → 多行随机码」；② 更新到 dmaic-data 私有仓库的 codes.csv（保持全部历史码都在文件内）。</div>
+
+  <div class="card">
+    <h2>① 批量生成支付兑换码</h2>
+    <label>生成数量（1~1000）</label>
+    <input type="number" id="count" value="100" min="1" max="1000">
+    <button class="btn" id="btnGen">生成</button>
+    <div class="count" id="genCount"></div>
+    <label>生成的兑换码（每行一个，已自动去重）</label>
+    <textarea id="genOut" spellcheck="false" placeholder="点击「生成」后在此显示"></textarea>
+    <button class="btn" id="btnCopyAll">复制全部</button>
+    <button class="btn ghost" id="btnDownload">下载 codes.csv</button>
+    <p class="note">算法：数据码 = MOD(种子×987654321+123456789, 9000000000)+1000000000（10 位），校验码 = 98 − MOD(数据码×100, 97)（2 位），共 12 位；校验规则 (前10位×100+后2位) MOD 97 = 1。</p>
+  </div>
+
+  <div class="card">
+    <h2>② 校验兑换码（仅校验数值规则）</h2>
+    <label>兑换码（12 位数字）</label>
+    <input type="text" id="checkCode" maxlength="12" placeholder="粘贴单个兑换码">
+    <button class="btn" id="btnCheck">校验</button>
+    <div class="result" id="checkResult"></div>
+    <p class="note">仅校验数值规则是否有效；是否已被使用需在下方「库存核对」或注册库中查询。</p>
+  </div>
+
+  <div class="card">
+    <h2>③ 库存核对（剩余可用兑换码）</h2>
+    <label>codes.csv 全文（从私有仓库复制，含表头）</label>
+    <textarea id="poolIn" spellcheck="false" placeholder="兑换码&#10;123456789012&#10;..."></textarea>
+    <label>registrations.csv 全文（从私有仓库复制，含表头）</label>
+    <textarea id="regIn" spellcheck="false" placeholder="注册序号,账号名,支付兑换码,..."></textarea>
+    <button class="btn" id="btnStock">核对库存</button>
+    <div class="result" id="stockResult"></div>
+    <label>剩余可用兑换码</label>
+    <textarea id="stockOut" spellcheck="false" placeholder="点击「核对库存」后在此显示"></textarea>
+  </div>
+</div>
+
+<script src="core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.DMAIC;
+  var $ = function (id) { return document.getElementById(id); };
+
+  $('btnGen').addEventListener('click', function () {
+    var n = parseInt($('count').value, 10);
+    if (!n || n < 1 || n > 1000) { $('genCount').textContent = '请输入 1~1000 之间的数量'; return; }
+    var codes = D.generateCodes(n);
+    $('genOut').value = codes.join('\n');
+    $('genCount').textContent = '已生成 ' + codes.length + ' 个兑换码，全部通过校验规则';
+  });
+
+  $('btnCopyAll').addEventListener('click', function () {
+    var t = $('genOut').value;
+    if (!t) return;
+    navigator.clipboard.writeText(t).then(function () {
+      var b = $('btnCopyAll'); b.textContent = '已复制';
+      setTimeout(function () { b.textContent = '复制全部'; }, 1500);
+    });
+  });
+
+  $('btnDownload').addEventListener('click', function () {
+    var t = $('genOut').value;
+    if (!t) return;
+    var rows = [D.CODES_HEADER.join(',')];
+    t.split('\n').forEach(function (l) { var c = l.trim(); if (c) rows.push(c); });
+    var csv = D.toCsv(rows);
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'codes.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  $('btnCheck').addEventListener('click', function () {
+    var c = $('checkCode').value.replace(/\s+/g, '');
+    var ok = D.isValidCode(c);
+    $('checkResult').innerHTML = ok
+      ? '<span class="ok">✓ 有效：数值校验通过（(前10位×100+后2位) MOD 97 = 1）</span>'
+      : '<span class="bad">✗ 无效：校验失败，请核对是否输入正确</span>';
+  });
+
+  $('btnStock').addEventListener('click', function () {
+    var poolRows = D.parseCsv($('poolIn').value).slice(1);
+    var regRows = D.parseCsv($('regIn').value).slice(1);
+    var pool = poolRows.map(function (r) { return r[0]; }).filter(Boolean);
+    var used = {};
+    regRows.forEach(function (r) { if (r[2]) used[r[2]] = true; });
+    var remaining = pool.filter(function (c) { return !used[c]; });
+    var usedCount = pool.length - remaining.length;
+    $('stockResult').innerHTML = '码池共 <b>' + pool.length + '</b> 个，已使用 <b>' + usedCount + '</b> 个，剩余可用 <b class="ok">' + remaining.length + '</b> 个';
+    $('stockOut').value = remaining.join('\n');
+  });
+})();
+</script>
+</body>
+</html>
