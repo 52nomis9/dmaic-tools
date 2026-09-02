@@ -35,12 +35,15 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
 .bad { color:var(--err); font-weight:600; }
 .warn { background:#fffbeb; border:1px solid #fde68a; color:#92400e; border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:18px; }
 .count { font-size:13px; color:var(--muted); margin-top:6px; }
+.reg-table { width:100%; border-collapse:collapse; font-size:12px; }
+.reg-table th, .reg-table td { border:1px solid var(--line); padding:6px 8px; text-align:left; white-space:nowrap; }
+.reg-table th { background:var(--soft); font-weight:600; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>DMAIC Tools 卖家工具</h1>
-  <p class="lead">兑换码生成 / 校验 / 库存核对。本页面在本地运行，不联网、不上传任何数据。</p>
+  <p class="lead">兑换码生成 / 校验 / 库存核对 / 注册库查询。除「⑤ 注册库查询」需联网读取私有数据库外，其余功能均在本地运行、不上传任何数据。</p>
 
   <div class="warn">⚠️ 生成的兑换码只是「候选码」，必须<b>同时</b>完成两步才真正生效：① 粘贴到爱发电商品的「高级选项 → 多行随机码」；② 更新到 dmaic-data 私有仓库的 codes.csv（保留全部历史码、追加新码）。<b>只做①不做②，买家注册时会提示「兑换码不在有效码池中」。Excel 手工生成的码同理——数值校验通过 ≠ 已在码池中。</b></div>
 
@@ -100,8 +103,23 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
     <textarea id="tokOut" spellcheck="false" readonly placeholder="点击「生成编码串」后在此显示"></textarea>
     <p class="note">说明：GitHub 会阻止把明文/base64 令牌提交进仓库（密钥扫描推送保护），因此 config.js 中的令牌以「反转 base64」编码存储。轮换令牌步骤：① 在 GitHub 创建新令牌（仅 dmaic-data、Contents 读写）→ ② 此处生成编码串 → ③ 编辑 dmaic-tools 仓库的 config.js，替换 atob('...') 内的字符串 → ④ Commit → ⑤ 删除旧令牌。</p>
   </div>
+  <div class="card">
+    <h2>⑤ 注册库查询（买家注册记录）</h2>
+    <button class="btn" id="btnLoadReg" type="button">加载注册数据库</button>
+    <span class="count" id="regLoadStatus" style="margin-left:10px"></span>
+    <label>搜索（账号名 / 兑换码 / 电话 / 邮箱 / 激活码）</label>
+    <input type="text" id="regSearch" placeholder="输入关键词过滤记录">
+    <label class="mode" style="margin-top:12px">
+      <input type="checkbox" id="showFull"> 显示完整联系方式（默认打码）
+    </label>
+    <div style="overflow-x:auto;margin-top:12px">
+      <table id="regTable" class="reg-table"></table>
+    </div>
+    <p class="note">隐私提示：注册库为买家个人信息，请勿截图外传。加载失败请检查网络或数据令牌是否有效（轮换令牌后需同步更新 config.js）。</p>
+  </div>
 </div>
 
+<script src="config.js"></script>
 <script src="core.js"></script>
 <script>
 (function () {
@@ -202,6 +220,75 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
     $('stockResult').innerHTML = '码池共 <b>' + pool.length + '</b> 个，已使用 <b>' + usedCount + '</b> 个，剩余可用 <b class="ok">' + remaining.length + '</b> 个';
     $('stockOut').value = remaining.join('\n');
   });
+
+  /* ⑤ 注册库查询 */
+  var regData = null;
+
+  function maskPhone(p) {
+    p = String(p || '');
+    return p.length > 5 ? p.slice(0, 3) + '****' + p.slice(-2) : p;
+  }
+  function maskEmail(m) {
+    m = String(m || '');
+    var at = m.indexOf('@');
+    return at > 1 ? m.slice(0, 1) + '***' + m.slice(at) : m;
+  }
+
+  $('btnLoadReg').addEventListener('click', async function () {
+    var st = $('regLoadStatus');
+    var btn = $('btnLoadReg');
+    btn.disabled = true;
+    st.textContent = '正在加载…';
+    try {
+      var cfg = window.DMAIC_CONFIG;
+      if (!cfg || !cfg.token) throw new Error('config.js 未配置数据令牌');
+      var url = 'https://api.github.com/repos/' + cfg.githubUser + '/' + cfg.dataRepo +
+        '/contents/registrations.csv?ref=' + encodeURIComponent(cfg.branch) + '&t=' + Date.now();
+      var r = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + cfg.token, 'Accept': 'application/vnd.github+json' },
+        cache: 'no-store'
+      });
+      if (r.status === 404) throw new Error('注册库尚未创建（暂无注册记录）');
+      if (!r.ok) throw new Error('HTTP ' + r.status + (r.status === 401 ? '（令牌无效或已过期）' : ''));
+      var j = await r.json();
+      regData = D.parseCsv(D.b64ToUtf8(j.content || ''));
+      st.textContent = '已加载 ' + (regData.length - 1) + ' 条注册记录';
+      renderReg();
+    } catch (e) {
+      regData = null;
+      st.textContent = '加载失败：' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function renderReg() {
+    var t = $('regTable');
+    if (!regData || !regData.length) { t.innerHTML = ''; return; }
+    var showFull = $('showFull').checked;
+    var q = $('regSearch').value.trim().toLowerCase();
+    var rows = regData.slice(1);
+    if (q) {
+      rows = rows.filter(function (r) {
+        return r.some(function (f) { return String(f).toLowerCase().indexOf(q) > -1; });
+      });
+    }
+    var html = '<tr>' + regData[0].map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr>';
+    rows.forEach(function (r) {
+      html += '<tr>' + r.map(function (f, idx) {
+        var v = String(f);
+        if (!showFull) {
+          if (idx === 6) v = maskPhone(v);
+          if (idx === 7) v = maskEmail(v);
+        }
+        return '<td>' + v + '</td>';
+      }).join('') + '</tr>';
+    });
+    t.innerHTML = html || '<tr><td colspan="9">无匹配记录</td></tr>';
+  }
+
+  $('regSearch').addEventListener('input', renderReg);
+  $('showFull').addEventListener('change', renderReg);
 })();
 </script>
 </body>
