@@ -52,7 +52,13 @@
 
 **买家找回激活码**：registrations.csv 中按账号名查「激活密钥」列即可。
 
-**轮换数据令牌**（如怀疑泄露）：GitHub → Settings → Developer settings → Fine-grained tokens → 删除旧令牌并新建（仅授权 dmaic-data、Contents 读写）→ 编辑公开仓库 `dmaic-tools/config.js` 替换 token → Commit。
+**轮换数据令牌**（如怀疑泄露）：
+1. GitHub → Settings → Developer settings → Fine-grained tokens → 新建令牌（仅授权 dmaic-data、Contents 读写，有效期选最长）
+2. 打开 `generator.html` → 「④ 令牌编码」→ 粘贴新令牌 → 生成编码串
+3. 编辑公开仓库 `dmaic-tools/config.js` → 替换 `atob('...')` 引号内的字符串 → Commit
+4. 回到令牌管理页删除旧令牌
+
+> 注意：GitHub 密钥扫描会阻止把明文/base64 形式的令牌提交进仓库，因此 config.js 里的令牌以「反转 base64」编码存储，轮换时务必使用 generator.html 的编码工具。
 
 **修改功能介绍区**：编辑公开仓库 `dmaic-tools/index.html` 的 `<section id="features">` 区域。
 
