@@ -7,7 +7,8 @@
 
   var SERIAL_START = 1901;
   var BIOS_PLACEHOLDER = 'TBFBYOEM';
-  var REG_HEADER = ['注册序号', '账号名', '支付兑换码', '日期序列', 'BIOS序列号', '激活密钥', '联系电话', '联系邮箱', '注册时间'];
+  var PC_PLACEHOLDER = 'PCNAME';
+  var REG_HEADER = ['注册序号', '账号名', '支付兑换码', '日期序列', 'BIOS序列号', '计算机名', '激活密钥', '联系电话', '联系邮箱', '注册时间'];
   var CODES_HEADER = ['兑换码'];
 
   /* ---------- 支付兑换码：生成与校验 ----------
@@ -75,17 +76,28 @@
     return v;
   }
 
-  /* ---------- 12 位激活密钥 ----------
-     ① 序列号后四位 ② 账户名后四位 ③ BIOS序列号后四位
-     按 ①②③①②③①②③①②③ 逐位交叉                          */
+  /* ---------- 计算机名归一化 ----------
+     空 / 缺失 → PCNAME；不足 4 位左补 0；清除 CSV 非法字符 */
 
-  function buildKey(serial, account, bios) {
+  function normalizeComputerName(raw) {
+    var v = String(raw == null ? '' : raw).replace(/[,\r\n"']/g, '').trim();
+    if (!v) return PC_PLACEHOLDER;
+    if (v.length < 4) v = v.padStart(4, '0');
+    return v;
+  }
+
+  /* ---------- 16 位激活密钥 ----------
+     ① 序列号后四位 ② 账户名后四位 ③ BIOS序列号后四位 ④ 计算机名后四位
+     按 ①②③④①②③④①②③④①②③④ 逐位交叉                          */
+
+  function buildKey(serial, account, bios, computerName) {
     var s = String(serial).slice(-4);
     var a = String(account).slice(-4);
     var b = String(bios).slice(-4);
-    if (s.length < 4 || a.length < 4 || b.length < 4) return null;
+    var c = String(computerName == null ? '' : computerName).slice(-4);
+    if (s.length < 4 || a.length < 4 || b.length < 4 || c.length < 4) return null;
     var key = '';
-    for (var i = 0; i < 4; i++) key += s[i] + a[i] + b[i];
+    for (var i = 0; i < 4; i++) key += s[i] + a[i] + b[i] + c[i];
     return key;
   }
 
@@ -153,7 +165,9 @@
     var bios = normalizeBios(input.bios);
     if (bios.length < 4) errors.bios = 'BIOS 序列号无效，请按提示获取';
 
-    return { errors: errors, account: account, code: code, phone: phone, email: email, bios: bios };
+    var computerName = normalizeComputerName(input.computerName);
+
+    return { errors: errors, account: account, code: code, phone: phone, email: email, bios: bios, computerName: computerName };
   }
 
   /* ---------- 注册流程 ----------
@@ -206,13 +220,13 @@
       }
 
       var serial = nextSerial(body);
-      var key = buildKey(serial, v.account, v.bios);
-      if (!key) return { ok: false, errors: { bios: 'BIOS 序列号无效' } };
+      var key = buildKey(serial, v.account, v.bios, v.computerName);
+      if (!key) return { ok: false, errors: { bios: '机器信息无效，请联系卖家' } };
 
       var dt = new Date();
       var time = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0') +
         ' ' + String(dt.getHours()).padStart(2, '0') + ':' + String(dt.getMinutes()).padStart(2, '0');
-      var newRow = [String(serial), v.account, v.code, dateSeq, v.bios, key, sanitize(v.phone), sanitize(v.email), time];
+      var newRow = [String(serial), v.account, v.code, dateSeq, v.bios, v.computerName, key, sanitize(v.phone), sanitize(v.email), time];
 
       prog('write');
       var newCsv = toCsv([REG_HEADER].concat(body).concat([newRow]));
@@ -223,7 +237,7 @@
         if (e && (e.status === 409 || e.status === 422)) continue;
         throw e;
       }
-      return { ok: true, serial: serial, key: key, account: v.account, code: v.code, bios: v.bios, dateSeq: dateSeq };
+      return { ok: true, serial: serial, key: key, account: v.account, code: v.code, bios: v.bios, computerName: v.computerName, dateSeq: dateSeq };
     }
     return { ok: false, error: '系统繁忙（写入冲突），请稍后重试' };
   }
@@ -231,6 +245,7 @@
   return {
     SERIAL_START: SERIAL_START,
     BIOS_PLACEHOLDER: BIOS_PLACEHOLDER,
+    PC_PLACEHOLDER: PC_PLACEHOLDER,
     REG_HEADER: REG_HEADER,
     CODES_HEADER: CODES_HEADER,
     isValidCode: isValidCode,
@@ -239,6 +254,7 @@
     generateCodesFromSeeds: generateCodesFromSeeds,
     generateCodes: generateCodes,
     normalizeBios: normalizeBios,
+    normalizeComputerName: normalizeComputerName,
     buildKey: buildKey,
     sanitize: sanitize,
     parseCsv: parseCsv,
