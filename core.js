@@ -199,6 +199,11 @@
           return { ok: false, errors: { code: '该兑换码已被使用，每个兑换码仅可激活一次' } };
         }
       }
+      for (var a = 0; a < body.length; a++) {
+        if (body[a][1] === v.account) {
+          return { ok: false, errors: { account: '该账号名已被注册，请更换账号名' } };
+        }
+      }
 
       var serial = nextSerial(body);
       var key = buildKey(serial, v.account, v.bios);
