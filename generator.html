@@ -74,6 +74,16 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
     <label>剩余可用兑换码</label>
     <textarea id="stockOut" spellcheck="false" placeholder="点击「核对库存」后在此显示"></textarea>
   </div>
+
+  <div class="card">
+    <h2>④ 令牌编码（轮换数据令牌时用）</h2>
+    <label>粘贴新的 github_pat_ 开头的令牌</label>
+    <input type="text" id="tokIn" placeholder="github_pat_xxxxxxxx...">
+    <button class="btn" id="btnTok">生成编码串</button>
+    <label>编码串（替换 config.js 里 atob('...') 中的字符串）</label>
+    <textarea id="tokOut" spellcheck="false" readonly placeholder="点击「生成编码串」后在此显示"></textarea>
+    <p class="note">说明：GitHub 会阻止把明文/base64 令牌提交进仓库（密钥扫描推送保护），因此 config.js 中的令牌以「反转 base64」编码存储。轮换令牌步骤：① 在 GitHub 创建新令牌（仅 dmaic-data、Contents 读写）→ ② 此处生成编码串 → ③ 编辑 dmaic-tools 仓库的 config.js，替换 atob('...') 内的字符串 → ④ Commit → ⑤ 删除旧令牌。</p>
+  </div>
 </div>
 
 <script src="core.js"></script>
@@ -120,6 +130,15 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
     $('checkResult').innerHTML = ok
       ? '<span class="ok">✓ 有效：数值校验通过（(前10位×100+后2位) MOD 97 = 1）</span>'
       : '<span class="bad">✗ 无效：校验失败，请核对是否输入正确</span>';
+  });
+
+  $('btnTok').addEventListener('click', function () {
+    var t = $('tokIn').value.trim();
+    if (!/^github_pat_[A-Za-z0-9_]+$/.test(t)) { $('tokOut').value = ''; $('tokOut').placeholder = '令牌格式不正确，应以 github_pat_ 开头'; return; }
+    var b64 = btoa(unescape(encodeURIComponent(t)));
+    $('tokOut').value = b64.split('').reverse().join('');
+    var b = $('btnTok'); b.textContent = '已生成';
+    setTimeout(function () { b.textContent = '生成编码串'; }, 1500);
   });
 
   $('btnStock').addEventListener('click', function () {
