@@ -38,12 +38,24 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
 .reg-table { width:100%; border-collapse:collapse; font-size:12px; }
 .reg-table th, .reg-table td { border:1px solid var(--line); padding:6px 8px; text-align:left; white-space:nowrap; }
 .reg-table th { background:var(--soft); font-weight:600; }
+.label-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.label-row label { margin:10px 0 5px; }
+.btn-mini {
+  padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer; margin:0;
+  background:#fff; color:var(--brand); border:1px solid var(--brand); border-radius:6px;
+  transition:background .15s ease, transform .15s ease;
+}
+.btn-mini:hover:not(:disabled) { background:var(--soft); transform:translateY(-1px); }
+.btn-mini:disabled { opacity:.55; cursor:not-allowed; transform:none; }
+.load-status { font-size:12px; margin:4px 0 0; }
+.load-status.ok { color:var(--ok); }
+.load-status.bad { color:var(--err); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>DMAIC Tools 卖家工具</h1>
-  <p class="lead">兑换码生成 / 校验 / 库存核对 / 注册库查询。除「⑤ 注册库查询」需联网读取私有数据库外，其余功能均在本地运行、不上传任何数据。</p>
+  <p class="lead">兑换码生成 / 校验 / 库存核对 / 注册库查询。「③ 库存核对」与「⑤ 注册库查询」的自动读取需联网访问私有数据库，其余功能均在本地运行、不上传任何数据。</p>
 
   <div class="warn">⚠️ 生成的兑换码只是「候选码」，必须<b>同时</b>完成两步才真正生效：① 粘贴到爱发电商品的「高级选项 → 多行随机码」；② 更新到 dmaic-data 私有仓库的 codes.csv（保留全部历史码、追加新码）。<b>只做①不做②，买家注册时会提示「兑换码不在有效码池中」。Excel 手工生成的码同理——数值校验通过 ≠ 已在码池中。</b></div>
 
@@ -84,14 +96,23 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
 
   <div class="card">
     <h2>③ 库存核对（剩余可用兑换码）</h2>
-    <label>codes.csv 全文（从私有仓库复制，含表头）</label>
+    <div class="label-row">
+      <label>codes.csv 全文（从私有仓库复制，含表头）</label>
+      <button class="btn-mini" id="btnLoadPool" type="button">↻ 自动读取</button>
+    </div>
     <textarea id="poolIn" spellcheck="false" placeholder="兑换码&#10;123456789012&#10;..."></textarea>
-    <label>registrations.csv 全文（从私有仓库复制，含表头）</label>
+    <div class="load-status" id="poolLoadStatus"></div>
+    <div class="label-row">
+      <label>registrations.csv 全文（从私有仓库复制，含表头）</label>
+      <button class="btn-mini" id="btnLoadRegCsv" type="button">↻ 自动读取</button>
+    </div>
     <textarea id="regIn" spellcheck="false" placeholder="注册序号,账号名,支付兑换码,..."></textarea>
+    <div class="load-status" id="regCsvLoadStatus"></div>
     <button class="btn" id="btnStock">核对库存</button>
     <div class="result" id="stockResult"></div>
     <label>剩余可用兑换码</label>
     <textarea id="stockOut" spellcheck="false" placeholder="点击「核对库存」后在此显示"></textarea>
+    <p class="note">两种方式任选：点击「自动读取」直接从私有仓库拉取对应文件（需联网、令牌有效），或从私有仓库手动复制全文粘贴到文本框。读取后点「核对库存」即可统计。</p>
   </div>
 
   <div class="card">
@@ -220,6 +241,41 @@ textarea { min-height:130px; font-family:Consolas,monospace; font-size:13px; res
     $('stockResult').innerHTML = '码池共 <b>' + pool.length + '</b> 个，已使用 <b>' + usedCount + '</b> 个，剩余可用 <b class="ok">' + remaining.length + '</b> 个';
     $('stockOut').value = remaining.join('\n');
   });
+
+  /* ③ 自动读取私有仓库文件（保留手动粘贴方式） */
+  async function loadRepoFile(path, taId, stId, btnId) {
+    var st = $(stId), btn = $(btnId);
+    st.className = 'load-status';
+    btn.disabled = true;
+    btn.textContent = '读取中…';
+    st.textContent = '正在从私有仓库读取 ' + path + ' …';
+    try {
+      var cfg = window.DMAIC_CONFIG;
+      if (!cfg || !cfg.token) throw new Error('config.js 未配置数据令牌');
+      var url = 'https://api.github.com/repos/' + cfg.githubUser + '/' + cfg.dataRepo +
+        '/contents/' + encodeURIComponent(path) + '?ref=' + encodeURIComponent(cfg.branch) + '&t=' + Date.now();
+      var r = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + cfg.token, 'Accept': 'application/vnd.github+json' },
+        cache: 'no-store'
+      });
+      if (r.status === 404) throw new Error('私有仓库中暂无 ' + path);
+      if (!r.ok) throw new Error('HTTP ' + r.status + (r.status === 401 ? '（令牌无效或已过期）' : ''));
+      var j = await r.json();
+      var text = D.b64ToUtf8(j.content || '');
+      $(taId).value = text;
+      var lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(function (l) { return l.trim(); });
+      st.textContent = '✓ 已读取 ' + path + '（共 ' + lines.length + ' 行，含表头）';
+      st.className = 'load-status ok';
+    } catch (e) {
+      st.textContent = '✗ 读取失败：' + e.message + '（可改用手动复制粘贴）';
+      st.className = 'load-status bad';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '↻ 自动读取';
+    }
+  }
+  $('btnLoadPool').addEventListener('click', function () { loadRepoFile('codes.csv', 'poolIn', 'poolLoadStatus', 'btnLoadPool'); });
+  $('btnLoadRegCsv').addEventListener('click', function () { loadRepoFile('registrations.csv', 'regIn', 'regCsvLoadStatus', 'btnLoadRegCsv'); });
 
   /* ⑤ 注册库查询 */
   var regData = null;
