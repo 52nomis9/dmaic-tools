@@ -272,6 +272,51 @@ footer {
   border-radius: 9px; background: #fff; color: var(--muted); font-size: 14px; cursor: pointer;
 }
 .save-tip { font-size: 12px; color: var(--err); margin-top: 14px; }
+.aux-row { display: flex; gap: 14px; margin-top: 16px; }
+@media (max-width: 640px) { .aux-row { flex-direction: column; } }
+.aux { flex: 1; }
+.btn-aux {
+  width: 100%; padding: 10px; border-radius: 9px; cursor: pointer;
+  font-size: 14px; font-weight: 700; letter-spacing: 1px;
+  background: #fff; color: var(--brand); border: 1px solid var(--brand);
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.btn-aux:hover:not(:disabled) { background: var(--soft); transform: translateY(-2px); box-shadow: 0 8px 18px rgba(30,64,175,.12); }
+.btn-aux:active { transform: translateY(0); }
+.btn-aux.fb { color: #7c3aed; border-color: #7c3aed; }
+.btn-aux.fb:hover:not(:disabled) { background: #f7f3ff; }
+.btn-aux.danger { color: var(--err); border-color: var(--err); }
+.btn-aux.danger:hover:not(:disabled) { background: #fef2f2; }
+.btn-aux:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+.aux-note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+.msg-text { font-size: 14px; line-height: 1.9; margin: 14px 0 20px; text-align: left; color: var(--ink); word-break: break-word; white-space: pre-wrap; }
+#msgModal.error h3 { color: var(--err); }
+#msgModal.error .modal-card { border-top: 4px solid var(--err); }
+.fb-card textarea {
+  width: 100%; min-height: 130px; padding: 10px 12px; border: 1px solid var(--line);
+  border-radius: 8px; font-size: 14px; font-family: inherit; outline: none;
+  background: #fbfcfe; resize: vertical;
+}
+.fb-card textarea:focus { border-color: var(--brand); background: #fff; }
+.fb-card textarea.invalid { border-color: var(--err); }
+.fb-counter { font-size: 12px; color: var(--muted); text-align: right; margin: 6px 0 4px; }
+.fb-card .err { color: var(--err); font-size: 12px; text-align: left; margin-bottom: 8px; display: none; }
+.fb-card .err.show { display: block; }
+section#fbAdmin {
+  margin-top: 24px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 24px; box-shadow: 0 1px 3px rgba(16,24,40,.05);
+}
+.fb-admin-bar { display: flex; gap: 12px; flex-wrap: wrap; }
+.fb-admin-bar .btn-aux { width: auto; padding: 9px 22px; letter-spacing: 0; }
+.fb-admin-out { margin-top: 16px; }
+.fb-total { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.fb-empty { font-size: 13px; color: var(--muted); padding: 16px; background: var(--soft); border-radius: 8px; text-align: center; }
+.fb-item { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; animation: fadeUp .4s ease both; }
+.fb-item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.fb-item-head b { font-size: 14px; }
+.fb-item-head span { font-size: 12px; color: var(--muted); }
+.fb-item-meta { font-size: 12px; color: var(--muted); margin-top: 4px; word-break: break-all; }
+.fb-item-text { font-size: 13px; margin-top: 8px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
 </style>
 </head>
 <body>
@@ -327,6 +372,16 @@ footer {
       </div>
 
       <button class="btn" id="btnSubmit" type="submit">生成注册激活码</button>
+      <div class="aux-row">
+        <div class="aux">
+          <button type="button" class="btn-aux" id="btnRecover">找回激活码</button>
+          <p class="aux-note">填入正确的账号、联系电话、联系邮箱即可重置激活码，每个用户一年只能使用找回一次。</p>
+        </div>
+        <div class="aux">
+          <button type="button" class="btn-aux fb" id="btnFeedback">用户反馈</button>
+          <p class="aux-note">输入正确账号名，然后填写联系电话或联系邮箱中的任意一个，即可向作者反馈用户建议及问题。</p>
+        </div>
+      </div>
       <div class="global-err" id="globalErr"></div>
       <div class="status" id="status"><div class="spin"></div><span id="statusText">处理中…</span></div>
     </form>
@@ -436,24 +491,35 @@ footer {
     </div>
     <p class="feat-note">点击任意卡片可查看功能详情。以上为功能概览，具体工具清单以软件内实际提供为准。</p>
   </section>
+
+  <section id="fbAdmin">
+    <h2>用户反馈记录</h2>
+    <p class="lead">买家提交的建议与问题反馈。点击「读取反馈记录」查看 feedback.json 全部内容；确认处理完毕后可清空重置。</p>
+    <div class="fb-admin-bar">
+      <button type="button" class="btn-aux" id="btnFbRead">读取反馈记录</button>
+      <button type="button" class="btn-aux danger" id="btnFbClear">清空重置反馈</button>
+    </div>
+    <div id="fbAdminOut" class="fb-admin-out"></div>
+  </section>
 </main>
 
 <footer>© 2026 DMAIC Tools · 账号注册与激活中心</footer>
 
 <div class="modal" id="modal">
   <div class="modal-card">
-    <h3>注册成功</h3>
-    <div class="sub">以下为系统生成的一次性注册激活码，仅显示一次</div>
+    <h3 id="mTitle">注册成功</h3>
+    <div class="sub" id="mSub">以下为系统生成的一次性注册激活码，仅显示一次</div>
     <div class="key-box">
       <div class="lbl">一次性注册激活码</div>
       <div class="key" id="mKey"></div>
     </div>
     <div class="meta">
       <div><span>绑定账号</span><span id="mAccount"></span></div>
+      <div id="mActRow" style="display:none"><span>激活时间</span><span id="mAct"></span></div>
     </div>
     <button class="btn-copy" id="btnCopy" type="button">复制激活码</button>
     <button class="btn-close" id="btnClose" type="button">我已保存，关闭</button>
-    <div class="save-tip">请立即复制并妥善保存激活码；如遗失，可凭账号名与联系方式联系卖家查询。</div>
+    <div class="save-tip">请立即复制并妥善保存激活码；如遗失，可点击左下方「找回激活码」自助重置（每个账号一年一次）。</div>
   </div>
 </div>
 
@@ -463,6 +529,26 @@ footer {
     <h3 id="fdTitle"></h3>
     <p id="fdDesc"></p>
     <button class="btn-close" id="fdClose" type="button">关闭</button>
+  </div>
+</div>
+
+<div class="modal" id="msgModal">
+  <div class="modal-card">
+    <h3 id="msgTitle">提示</h3>
+    <p class="msg-text" id="msgText"></p>
+    <button class="btn-close" id="msgClose" type="button">知道了</button>
+  </div>
+</div>
+
+<div class="modal" id="fbModal">
+  <div class="modal-card fb-card">
+    <h3>用户反馈</h3>
+    <div class="sub">欢迎向作者反馈使用建议或问题，我们会认真阅读每一条反馈</div>
+    <textarea id="fbText" maxlength="300" placeholder="请输入您的建议或问题（最多 300 字）…"></textarea>
+    <div class="fb-counter"><span id="fbCount">0</span> / 300</div>
+    <div class="err" id="eFbText"></div>
+    <button class="btn-copy" id="fbSubmit" type="button">提交反馈</button>
+    <button class="btn-close" id="fbClose" type="button">取消</button>
   </div>
 </div>
 
@@ -657,6 +743,9 @@ footer {
         showErrors(res.errors || null, res.error || '注册失败，请检查输入');
         return;
       }
+      $('mTitle').textContent = '注册成功';
+      $('mSub').textContent = '以下为系统生成的一次性注册激活码，仅显示一次';
+      $('mActRow').style.display = 'none';
       $('mKey').textContent = res.key;
       $('mAccount').textContent = res.account;
       $('modal').classList.add('show');
@@ -680,6 +769,218 @@ footer {
     if (e.key === 'Escape') {
       $('modal').classList.remove('show');
       $('featModal').classList.remove('show');
+      $('msgModal').classList.remove('show');
+      $('fbModal').classList.remove('show');
+    }
+  });
+
+  /* ---------- 通用提示弹窗 ---------- */
+  function showMsg(title, text, isError) {
+    $('msgTitle').textContent = title;
+    $('msgText').textContent = text;
+    $('msgModal').classList.toggle('error', !!isError);
+    $('msgModal').classList.add('show');
+  }
+  $('msgClose').addEventListener('click', function () { $('msgModal').classList.remove('show'); });
+  $('msgModal').addEventListener('click', function (e) { if (e.target === this) this.classList.remove('show'); });
+
+  /* ---------- 找回激活码（左下按钮） ---------- */
+  var REC_STAGE = {
+    connect: '正在连接注册数据库…',
+    verify: '正在核对账号与联系方式…',
+    write: '正在重置激活码…'
+  };
+  $('btnRecover').addEventListener('click', async function () {
+    clearErrors();
+    var btn = this;
+    if (!CFG.token || !CFG.githubUser || !CFG.dataRepo) {
+      showMsg('找回失败', '站点数据配置未完成，请联系卖家', true);
+      return;
+    }
+    var input = {
+      account: $('account').value,
+      phone: $('phone').value,
+      email: $('email').value,
+      bios: autoBios,
+      computerName: autoCn
+    };
+    btn.disabled = true;
+    btn.textContent = '处理中…';
+    setStatus(REC_STAGE.connect, true);
+    try {
+      var res = await D.recover({ getFile: apiGetFile, putFile: apiPutFile }, input, function (stage) {
+        setStatus(REC_STAGE[stage] || '处理中…', true);
+      });
+      setStatus('', false);
+      if (!res.ok) {
+        if (res.errors) showErrors(res.errors);
+        if (res.error) showMsg('找回失败', res.error, true);
+        if (!res.errors && !res.error) showMsg('找回失败', '请检查输入后重试', true);
+        return;
+      }
+      $('mTitle').textContent = '激活码找回成功';
+      $('mSub').textContent = '已按当前机器信息重置，以下为新激活码，仅显示一次';
+      $('mKey').textContent = res.key;
+      $('mAccount').textContent = res.account;
+      $('mActRow').style.display = '';
+      $('mAct').textContent = res.activatedAt;
+      $('modal').classList.add('show');
+    } catch (err) {
+      setStatus('', false);
+      showMsg('找回失败', friendlyError(err), true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '找回激活码';
+    }
+  });
+
+  /* ---------- 用户反馈（右下按钮） ---------- */
+  var FB_STAGE = { connect: '正在核对账号信息…' };
+  function fbInput() {
+    return {
+      account: $('account').value,
+      phone: $('phone').value,
+      email: $('email').value,
+      bios: autoBios,
+      computerName: autoCn
+    };
+  }
+  function openFbModal() {
+    $('fbText').value = '';
+    $('fbCount').textContent = '0';
+    $('eFbText').textContent = '';
+    $('eFbText').classList.remove('show');
+    $('fbText').classList.remove('invalid');
+    $('fbModal').classList.add('show');
+    setTimeout(function () { $('fbText').focus(); }, 60);
+  }
+  $('btnFeedback').addEventListener('click', async function () {
+    clearErrors();
+    if (!CFG.token || !CFG.githubUser || !CFG.dataRepo) {
+      showMsg('无法反馈', '站点数据配置未完成，请联系卖家', true);
+      return;
+    }
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = '核对中…';
+    setStatus(FB_STAGE.connect, true);
+    try {
+      var res = await D.checkFeedbackIdentity({ getFile: apiGetFile }, fbInput());
+      setStatus('', false);
+      if (!res.ok) {
+        if (res.errors) showErrors(res.errors);
+        if (res.error) showMsg('无法反馈', res.error, true);
+        if (!res.errors && !res.error) showMsg('无法反馈', '请检查输入后重试', true);
+        return;
+      }
+      openFbModal();
+    } catch (err) {
+      setStatus('', false);
+      showMsg('无法反馈', friendlyError(err), true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '用户反馈';
+    }
+  });
+  $('fbText').addEventListener('input', function () {
+    $('fbCount').textContent = String(this.value.length);
+    $('eFbText').textContent = '';
+    $('eFbText').classList.remove('show');
+    $('fbText').classList.remove('invalid');
+  });
+  $('fbClose').addEventListener('click', function () { $('fbModal').classList.remove('show'); });
+  $('fbModal').addEventListener('click', function (e) { if (e.target === this) this.classList.remove('show'); });
+  $('fbSubmit').addEventListener('click', async function () {
+    var btn = this;
+    var input = fbInput();
+    input.text = $('fbText').value;
+    btn.disabled = true;
+    btn.textContent = '提交中…';
+    try {
+      var res = await D.submitFeedback({ getFile: apiGetFile, putFile: apiPutFile }, input);
+      if (!res.ok) {
+        if (res.errors && res.errors.text) {
+          $('eFbText').textContent = res.errors.text;
+          $('eFbText').classList.add('show');
+          $('fbText').classList.add('invalid');
+          return;
+        }
+        $('fbModal').classList.remove('show');
+        if (res.errors) showErrors(res.errors);
+        showMsg('提交失败', res.error || '请检查输入后重试', true);
+        return;
+      }
+      $('fbModal').classList.remove('show');
+      showMsg('反馈已提交', '感谢您的反馈！我们已收到您的建议/问题，会尽快处理。', false);
+    } catch (err) {
+      $('fbModal').classList.remove('show');
+      showMsg('提交失败', friendlyError(err), true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '提交反馈';
+    }
+  });
+
+  /* ---------- 页面底部：反馈记录读取 / 清空重置 ---------- */
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+  function renderFbEntries(entries) {
+    var out = $('fbAdminOut');
+    if (!entries.length) {
+      out.innerHTML = '<div class="fb-empty">暂无反馈记录</div>';
+      return;
+    }
+    var html = '<p class="fb-total">共 ' + entries.length + ' 条反馈</p>';
+    for (var i = 0; i < entries.length; i++) {
+      var en = entries[i];
+      html += '<div class="fb-item">' +
+        '<div class="fb-item-head"><b>' + escHtml(en['账号名']) + '</b><span>' + escHtml(en['反馈时间']) + '</span></div>' +
+        '<div class="fb-item-meta">BIOS：' + escHtml(en['BIOS序列号']) + ' · 计算机名：' + escHtml(en['计算机名']) + '</div>' +
+        '<div class="fb-item-text">' + escHtml(en['反馈内容']) + '</div>' +
+        '</div>';
+    }
+    out.innerHTML = html;
+  }
+  $('btnFbRead').addEventListener('click', async function () {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = '读取中…';
+    $('fbAdminOut').innerHTML = '<div class="fb-empty">正在读取反馈记录…</div>';
+    try {
+      var res = await D.readFeedback({ getFile: apiGetFile });
+      if (!res.ok) {
+        $('fbAdminOut').innerHTML = '<div class="fb-empty">读取失败：' + escHtml(res.error) + '</div>';
+        return;
+      }
+      renderFbEntries(res.entries);
+    } catch (err) {
+      $('fbAdminOut').innerHTML = '<div class="fb-empty">读取失败：' + escHtml(friendlyError(err)) + '</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '读取反馈记录';
+    }
+  });
+  $('btnFbClear').addEventListener('click', async function () {
+    if (!window.confirm('确认清空全部用户反馈记录？该操作不可恢复。')) return;
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = '清空中…';
+    try {
+      var res = await D.clearFeedback({ getFile: apiGetFile, putFile: apiPutFile });
+      if (!res.ok) {
+        showMsg('清空失败', res.error || '请稍后重试', true);
+        return;
+      }
+      $('fbAdminOut').innerHTML = '<div class="fb-empty">' +
+        (res.cleared ? '已清空 ' + res.cleared + ' 条反馈记录' : '反馈记录本已为空，无需清空') + '</div>';
+    } catch (err) {
+      showMsg('清空失败', friendlyError(err), true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '清空重置反馈';
     }
   });
 
