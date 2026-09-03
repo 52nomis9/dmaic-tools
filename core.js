@@ -5,7 +5,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
 
-  var SERIAL_START = 1901;
+  var SERIAL_START = 1001;
   var BIOS_PLACEHOLDER = 'TBFBYOEM';
   var PC_PLACEHOLDER = 'PCNAME';
   var REG_HEADER = ['注册序号', '账号名', '支付兑换码', '日期序列', 'BIOS序列号', '计算机名', '激活密钥', '联系电话', '联系邮箱', '注册时间', '激活时间'];
@@ -16,6 +16,11 @@
   var ACCOUNT_RE = /^[A-Za-z]{5,9}$/;
   var PHONE_RE = /^[\d+()\-\s]{5,20}$/;
   var EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+  /* 账号名不区分大小写：查重 / 找回 / 反馈均按小写比较 */
+  function sameAccount(a, b) {
+    return String(a == null ? '' : a).trim().toLowerCase() === String(b == null ? '' : b).trim().toLowerCase();
+  }
 
   /* ---------- 支付兑换码：生成与校验 ----------
      数据码 = MOD(种子×987654321+123456789, 9000000000)+1000000000  (10位)
@@ -185,7 +190,7 @@
   function validateInput(input) {
     var errors = {};
     var account = String(input.account || '').trim();
-    if (!ACCOUNT_RE.test(account)) errors.account = '账号须为 5~9 位字母（区分大小写）';
+    if (!ACCOUNT_RE.test(account)) errors.account = '账号须为 5~9 位字母（不区分大小写）';
 
     var code = String(input.code || '').replace(/\s+/g, '');
     if (!/^\d{12}$/.test(code)) errors.code = '支付兑换码须为 12 位数字';
@@ -250,8 +255,8 @@
         }
       }
       for (var a = 0; a < body.length; a++) {
-        if (body[a][1] === v.account) {
-          return { ok: false, errors: { account: '该账号名已被注册，请更换账号名' } };
+        if (sameAccount(body[a][1], v.account)) {
+          return { ok: false, errors: { account: '该账号名已被注册（不区分大小写），请更换账号名' } };
         }
       }
 
@@ -286,7 +291,7 @@
   async function recover(api, input, onProgress) {
     var account = String(input.account || '').trim();
     var errors = {};
-    if (!ACCOUNT_RE.test(account)) errors.account = '账号须为 5~9 位字母（区分大小写）';
+    if (!ACCOUNT_RE.test(account)) errors.account = '账号须为 5~9 位字母（不区分大小写）';
     var phone = String(input.phone || '').trim();
     if (!PHONE_RE.test(phone)) errors.phone = '请填写有效的联系电话';
     var email = String(input.email || '').trim();
@@ -307,7 +312,7 @@
 
       var idx = -1;
       for (var i = 0; i < body.length; i++) {
-        if (body[i][1] === account) { idx = i; break; }
+        if (sameAccount(body[i][1], account)) { idx = i; break; }
       }
       if (idx === -1) return { ok: false, errors: { account: '该账号名尚未注册，请核对后重试' } };
       var row = body[idx];
@@ -376,7 +381,7 @@
   async function checkFeedbackIdentity(api, input) {
     var account = String(input.account || '').trim();
     var errors = {};
-    if (!ACCOUNT_RE.test(account)) errors.account = '账号须为 5~9 位字母（区分大小写）';
+    if (!ACCOUNT_RE.test(account)) errors.account = '账号须为 5~9 位字母（不区分大小写）';
     var phone = String(input.phone || '').trim();
     var email = String(input.email || '').trim();
     if (phone && !PHONE_RE.test(phone)) errors.phone = '联系电话格式不正确';
@@ -390,7 +395,7 @@
     var body = regRows.length > 1 ? regRows.slice(1).map(ensureRow) : [];
     var row = null;
     for (var i = 0; i < body.length; i++) {
-      if (body[i][1] === account) { row = body[i]; break; }
+      if (sameAccount(body[i][1], account)) { row = body[i]; break; }
     }
     if (!row) return { ok: false, errors: { account: '该账号名尚未注册，请核对后重试' } };
 
@@ -398,7 +403,7 @@
     if (!id.phoneMatch && !id.emailMatch) {
       return { ok: false, error: '核对失败：联系电话 / 联系邮箱均与注册信息不符（需至少一项正确）' };
     }
-    return { ok: true, matched: id.phoneMatch && id.emailMatch ? 'both' : (id.phoneMatch ? 'phone' : 'email') };
+    return { ok: true, account: row[1], matched: id.phoneMatch && id.emailMatch ? 'both' : (id.phoneMatch ? 'phone' : 'email') };
   }
 
   async function submitFeedback(api, input) {
@@ -411,7 +416,7 @@
     var bios = normalizeBios(input.bios);
     var computerName = normalizeComputerName(input.computerName);
     var entry = {
-      账号名: String(input.account || '').trim(),
+      账号名: pre.account || String(input.account || '').trim(),
       反馈时间: nowTime(input.now),
       BIOS序列号: bios,
       计算机名: computerName,
@@ -491,6 +496,7 @@
     generateCodes: generateCodes,
     normalizeBios: normalizeBios,
     normalizeComputerName: normalizeComputerName,
+    sameAccount: sameAccount,
     buildKey: buildKey,
     sanitize: sanitize,
     sanitizeFeedbackText: sanitizeFeedbackText,
