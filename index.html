@@ -346,7 +346,7 @@ section#fbAdmin {
       <div class="grid">
         <div class="field" id="fAccount">
           <label for="account">账号名</label>
-          <div class="hint">5~9 位字母，区分大小写</div>
+          <div class="hint">5~9 位字母，不区分大小写</div>
           <input id="account" type="text" maxlength="9" autocomplete="off" placeholder="如 DMAICuser">
           <div class="acct-status" id="acctStatus"></div>
           <div class="err" id="eAccount"></div>
@@ -573,7 +573,7 @@ section#fbAdmin {
     if (!name) { f.classList.remove('invalid'); e.textContent = ''; return false; }
     var ok = /^[A-Za-z]{5,9}$/.test(name);
     f.classList.toggle('invalid', !ok);
-    e.textContent = ok ? '' : '账号须为 5~9 位英文字母（区分大小写），不能含数字、空格或符号';
+    e.textContent = ok ? '' : '账号须为 5~9 位英文字母（不区分大小写），不能含数字、空格或符号';
     return ok;
   }
 
@@ -605,10 +605,10 @@ section#fbAdmin {
       var rows = f ? D.parseCsv(f.content).slice(1) : [];
       var used = false;
       for (var i = 0; i < rows.length; i++) {
-        if (rows[i][1] === name) { used = true; break; }
+        if (D.sameAccount(rows[i][1], name)) { used = true; break; }
       }
       acctAvailable = !used;
-      el.textContent = used ? '✗ 该账号名已被注册，请更换' : '✓ 账号名可用';
+      el.textContent = used ? '✗ 该账号名已被注册（不区分大小写），请更换' : '✓ 账号名可用';
       el.className = 'acct-status ' + (used ? 'bad' : 'ok');
     } catch (e) {
       el.textContent = '';
@@ -720,7 +720,7 @@ section#fbAdmin {
     if (Object.keys(v.errors).length) { showErrors(v.errors); return; }
 
     if (acctAvailable === false) {
-      showErrors({ account: '该账号名已被注册，请更换账号名' });
+      showErrors({ account: '该账号名已被注册（不区分大小写），请更换账号名' });
       return;
     }
 
